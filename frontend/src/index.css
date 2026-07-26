@@ -95,7 +95,7 @@
 }
 html {
   min-width: 320px;
-  background: var(--bg);
+  background: #111018;
 }
 body {
   margin: 0;
@@ -103,7 +103,7 @@ body {
   min-height: 100vh;
   min-height: 100svh;
   overflow-x: hidden;
-  background: var(--bg);
+  background: #111018;
   color: var(--text);
 }
 button,
@@ -148,7 +148,7 @@ select:focus-visible {
   min-height: 100vh;
   min-height: 100svh;
   margin: 0 auto;
-  background: color-mix(in srgb, var(--bg) 68%, transparent);
+  background: transparent;
   border-inline: 1px solid var(--line);
   box-shadow: 0 0 70px rgba(45, 38, 70, 0.06);
   overflow: hidden;
@@ -167,7 +167,7 @@ select:focus-visible {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: color-mix(in srgb, var(--bg) 42%, transparent);
+  background: transparent;
 }
 .app-content {
   position: relative;
@@ -1753,7 +1753,7 @@ select:focus-visible {
   display: grid;
   gap: 14px;
   padding: max(18px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
-  background: var(--bg);
+  background: transparent;
   overflow: hidden auto;
   isolation: isolate;
 }
@@ -1772,8 +1772,8 @@ select:focus-visible {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: color-mix(in srgb, var(--bg) 42%, transparent);
-  backdrop-filter: blur(1px);
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .public-hero,
@@ -2199,8 +2199,8 @@ select:focus-visible {
 
 @media (max-width: 679px) {
   .availability-page .form-section {
-    padding: 13px;
-    border-radius: 22px;
+    padding: 12px;
+    border-radius: 20px;
   }
 
   .availability-page .field-row {
@@ -2209,13 +2209,13 @@ select:focus-visible {
 
   .availability-page .field-row--two {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 6px;
     margin-top: 0;
   }
 
   .availability-page .field-row--three {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 6px;
   }
 
   .availability-page .field-row--three .field:nth-child(3) {
@@ -2230,17 +2230,17 @@ select:focus-visible {
   }
 
   .availability-page .field span {
-    font-size: 12px;
+    font-size: 10px;
     line-height: 1.2;
   }
 
   .availability-page .field input,
   .availability-page .field select {
-    height: 44px;
-    min-height: 44px;
-    border-radius: 13px;
-    padding-inline: 8px;
-    font-size: 13px;
+    height: 36px;
+    min-height: 36px;
+    border-radius: 11px;
+    padding-inline: 6px;
+    font-size: 11px;
     line-height: 1.2;
     text-align: center;
   }
@@ -2312,10 +2312,10 @@ select:focus-visible {
   }
   .availability-page .field input,
   .availability-page .field select {
-    height: 42px;
-    min-height: 42px;
+    height: 34px;
+    min-height: 34px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: 10px;
   }
   .bottom-navigation a {
     min-height: 60px;
