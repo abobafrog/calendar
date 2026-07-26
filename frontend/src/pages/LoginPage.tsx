@@ -92,9 +92,9 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <PixelBlast
             variant="circle"
             pixelSize={6}
-            color="#7a787c"
-            patternScale={2.5}
-            patternDensity={1.1}
+            color="#B497CF"
+            patternScale={3}
+            patternDensity={1.2}
             pixelSizeJitter={0.5}
             enableRipples
             rippleSpeed={0.4}
@@ -105,7 +105,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             liquidRadius={1.2}
             liquidWobbleSpeed={5}
             speed={0.6}
-            edgeFade={0.22}
+            edgeFade={0.25}
             transparent
           />
         </Suspense>
