@@ -103,7 +103,11 @@ body {
   min-height: 100vh;
   min-height: 100svh;
   overflow-x: hidden;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 16% 4%, rgba(139, 125, 255, 0.34), transparent 30vw),
+    radial-gradient(circle at 86% 16%, rgba(97, 210, 199, 0.18), transparent 28vw),
+    radial-gradient(circle at 56% 92%, rgba(148, 72, 237, 0.18), transparent 34vw),
+    var(--bg);
   color: var(--text);
 }
 button,
@@ -162,6 +166,10 @@ select:focus-visible {
   z-index: 0;
   pointer-events: none;
   opacity: 0.7;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(139, 125, 255, 0.38), transparent 34%),
+    radial-gradient(circle at 86% 24%, rgba(97, 210, 199, 0.2), transparent 30%),
+    linear-gradient(135deg, rgba(148, 72, 237, 0.16), transparent 58%);
 }
 .app-shell::before {
   content: '';
@@ -170,7 +178,7 @@ select:focus-visible {
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--bg) 76%, transparent), color-mix(in srgb, var(--bg) 91%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 50%, transparent), color-mix(in srgb, var(--bg) 72%, transparent)),
     radial-gradient(circle at 10% 0%, rgba(97, 210, 199, 0.1), transparent 30%);
 }
 .app-content {
@@ -1757,7 +1765,10 @@ select:focus-visible {
   display: grid;
   gap: 14px;
   padding: max(18px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 16% 2%, rgba(139, 125, 255, 0.35), transparent 32%),
+    radial-gradient(circle at 85% 18%, rgba(97, 210, 199, 0.2), transparent 30%),
+    var(--bg);
   overflow: hidden auto;
   isolation: isolate;
 }
@@ -1768,6 +1779,10 @@ select:focus-visible {
   z-index: 0;
   pointer-events: none;
   opacity: 0.9;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(139, 125, 255, 0.32), transparent 34%),
+    radial-gradient(circle at 82% 20%, rgba(97, 210, 199, 0.18), transparent 30%),
+    linear-gradient(145deg, rgba(148, 72, 237, 0.16), transparent 58%);
 }
 
 .login-page::before {
@@ -1776,7 +1791,7 @@ select:focus-visible {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  background: color-mix(in srgb, var(--bg) 48%, transparent);
   backdrop-filter: blur(1px);
 }
 
@@ -2207,16 +2222,23 @@ select:focus-visible {
     border-radius: 24px;
   }
 
-  .availability-page .field-row,
-  .availability-page .field-row--two,
-  .availability-page .field-row--three {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
+  .availability-page .field-row {
     margin-top: 12px;
   }
 
   .availability-page .field-row--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
     margin-top: 0;
+  }
+
+  .availability-page .field-row--three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .availability-page .field-row--three .field:nth-child(3) {
+    grid-column: 1 / -1;
   }
 
   .availability-page .field-row .field,
@@ -2233,12 +2255,13 @@ select:focus-visible {
 
   .availability-page .field input,
   .availability-page .field select {
-    height: 52px;
-    min-height: 52px;
+    height: 50px;
+    min-height: 50px;
     border-radius: 16px;
-    padding-inline: 14px;
-    font-size: 16px;
+    padding-inline: 10px;
+    font-size: 15px;
     line-height: 1.2;
+    text-align: center;
   }
 
   .availability-page .sticky-submit {
@@ -2297,9 +2320,14 @@ select:focus-visible {
     grid-template-columns: 1fr;
     gap: 10px;
   }
-  .availability-page .field-row--two,
+  .availability-page .field-row--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .availability-page .field-row--three {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .availability-page .field-row--three .field:nth-child(3) {
+    grid-column: 1 / -1;
   }
   .bottom-navigation a {
     min-height: 60px;
