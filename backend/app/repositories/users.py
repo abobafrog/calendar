@@ -18,6 +18,11 @@ class UserRepository:
         result = await self.session.scalars(select(User).where(User.telegram_id == telegram_id))
         return result.first()
 
+    async def get_by_email(self, email: str) -> User | None:
+        normalized = email.strip().lower()
+        result = await self.session.scalars(select(User).where(func.lower(User.email) == normalized))
+        return result.first()
+
     async def get_by_username(self, username: str) -> User | None:
         normalized = username.removeprefix("@").lower()
         result = await self.session.scalars(select(User).where(func.lower(User.username) == normalized))
@@ -48,5 +53,28 @@ class UserRepository:
             user.first_name = data.first_name
             user.last_name = data.last_name
             user.photo_url = data.photo_url
+        await self.session.flush()
+        return user
+
+    async def create_password_user(
+        self,
+        *,
+        email: str,
+        password_hash: str,
+        first_name: str,
+        last_name: str | None,
+        username: str | None,
+        timezone: str,
+    ) -> User:
+        user = User(
+            email=email.strip().lower(),
+            password_hash=password_hash,
+            username=username.removeprefix("@").lower() if username else None,
+            first_name=first_name.strip(),
+            last_name=last_name.strip() if last_name else None,
+            timezone=timezone,
+            invite_code=secrets.token_urlsafe(12),
+        )
+        self.session.add(user)
         await self.session.flush()
         return user

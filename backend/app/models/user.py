@@ -19,8 +19,10 @@ class User(TimestampMixin, Base):
     __table_args__ = (CheckConstraint("week_starts_on BETWEEN 1 AND 7", name="valid_week_start"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
-    username: Mapped[str | None] = mapped_column(String(32), index=True)
+    telegram_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, index=True)
+    email: Mapped[str | None] = mapped_column(String(320), unique=True, index=True)
+    password_hash: Mapped[str | None] = mapped_column(String(512))
+    username: Mapped[str | None] = mapped_column(String(64), index=True)
     first_name: Mapped[str] = mapped_column(String(128))
     last_name: Mapped[str | None] = mapped_column(String(128))
     photo_url: Mapped[str | None] = mapped_column(String(2048))

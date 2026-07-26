@@ -41,7 +41,11 @@ async def notification_worker(bot: Bot, redis: Redis, settings: Settings) -> Non
             notification = await session.scalar(
                 select(Notification).options(selectinload(Notification.user)).where(Notification.id == notification_id)
             )
-            if notification is None or not notification.user.notifications_enabled:
+            if (
+                notification is None
+                or not notification.user.notifications_enabled
+                or notification.user.telegram_id is None
+            ):
                 continue
             meeting_id = notification.payload.get("meeting_id")
             keyboard = (

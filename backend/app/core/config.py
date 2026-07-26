@@ -9,9 +9,10 @@ class Settings(BaseSettings):
 
     app_env: str = "development"
     app_secret_key: str = Field(min_length=32)
-    bot_token: str
+    bot_token: str | None = None
     bot_username: str = "TimeTogetherBot"
     mini_app_url: str = "http://localhost:5173"
+    frontend_url: str = "http://localhost:5173"
     database_url: str
     redis_url: str = "redis://redis:6379/0"
     allowed_origins: str = "http://localhost:5173"

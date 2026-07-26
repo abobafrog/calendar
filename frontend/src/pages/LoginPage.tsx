@@ -1,0 +1,151 @@
+import { useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { CalendarDays, LogIn, UserPlus } from 'lucide-react'
+import { apiRequest } from '../api/client'
+import type { AuthResponse } from '../lib/types'
+
+type AuthMode = 'login' | 'register'
+
+interface LoginPageProps {
+  onAuthenticated: (auth: AuthResponse) => void
+}
+
+export function LoginPage({ onAuthenticated }: LoginPageProps) {
+  const navigate = useNavigate()
+  const [mode, setMode] = useState<AuthMode>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [username, setUsername] = useState('')
+  const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const title = mode === 'login' ? 'Войти в календарь' : 'Создать аккаунт'
+  const actionText = mode === 'login' ? 'Войти' : 'Зарегистрироваться'
+  const subtitle = useMemo(
+    () =>
+      mode === 'login'
+        ? 'Продолжайте планировать общее время с друзьями.'
+        : 'Нужны только имя, email и пароль. Друзья увидят календарь после взаимной связи.',
+    [mode],
+  )
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      const payload =
+        mode === 'login'
+          ? { email, password }
+          : {
+              email,
+              password,
+              first_name: firstName,
+              last_name: lastName || undefined,
+              username: username || undefined,
+              timezone,
+            }
+      const auth = await apiRequest<AuthResponse>(mode === 'login' ? '/auth/login' : '/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      onAuthenticated(auth)
+      navigate('/', { replace: true })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось авторизоваться')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <main className="login-page">
+      <section className="login-hero" aria-label="TimeTogether">
+        <div className="login-hero__badge">
+          <CalendarDays size={22} />
+          <span>TimeTogether</span>
+        </div>
+        <h1>Общий календарь без лишнего шума</h1>
+        <p>Добавляйте занятость, выбирайте друзей и находите время, когда все свободны.</p>
+      </section>
+
+      <section className="login-panel" aria-label={title}>
+        <div className="auth-tabs">
+          <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => setMode('login')}>
+            Вход
+          </button>
+          <button className={mode === 'register' ? 'active' : ''} type="button" onClick={() => setMode('register')}>
+            Регистрация
+          </button>
+        </div>
+
+        <header>
+          <h2>{title}</h2>
+          <p>{subtitle}</p>
+        </header>
+
+        <form className="auth-form" onSubmit={submit}>
+          {mode === 'register' && (
+            <>
+              <label>
+                Имя
+                <input value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
+              </label>
+              <label>
+                Фамилия
+                <input value={lastName} onChange={(event) => setLastName(event.target.value)} />
+              </label>
+              <label>
+                @username
+                <input
+                  autoCapitalize="none"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  placeholder="frokla"
+                />
+              </label>
+              <label>
+                Часовой пояс
+                <input value={timezone} onChange={(event) => setTimezone(event.target.value)} />
+              </label>
+            </>
+          )}
+          <label>
+            Email
+            <input
+              autoCapitalize="none"
+              autoComplete="email"
+              inputMode="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Пароль
+            <input
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              minLength={mode === 'register' ? 8 : 1}
+              required
+            />
+          </label>
+
+          {error && <p className="auth-error">{error}</p>}
+
+          <button className="auth-submit" disabled={busy} type="submit">
+            {mode === 'login' ? <LogIn size={20} /> : <UserPlus size={20} />}
+            {busy ? 'Подождите…' : actionText}
+          </button>
+        </form>
+
+      </section>
+    </main>
+  )
+}

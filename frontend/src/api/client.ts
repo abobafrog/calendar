@@ -2,9 +2,18 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
 
 let accessToken: string | null = sessionStorage.getItem('access_token')
 
+export function hasAccessToken() {
+  return Boolean(accessToken)
+}
+
 export function setAccessToken(token: string) {
   accessToken = token
   sessionStorage.setItem('access_token', token)
+}
+
+export function clearAccessToken() {
+  accessToken = null
+  sessionStorage.removeItem('access_token')
 }
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {

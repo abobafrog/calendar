@@ -1,34 +1,32 @@
-import { useEffect, useState } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { useState } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
+import { hasAccessToken, setAccessToken } from './api/client'
 import { useTheme } from './hooks/useTheme'
-import { initializeTelegram } from './lib/telegram'
+import type { AuthResponse } from './lib/types'
 import { AvailabilityPage } from './pages/AvailabilityPage'
 import { BusyCreatePage } from './pages/BusyCreatePage'
 import { CalendarPage } from './pages/CalendarPage'
 import { FriendsPage } from './pages/FriendsPage'
+import { LoginPage } from './pages/LoginPage'
 import { MeetingDetailPage } from './pages/MeetingDetailPage'
 import { MeetingsPage } from './pages/MeetingsPage'
 import { SettingsPage } from './pages/SettingsPage'
 
 export default function App() {
   useTheme()
-  const [authState, setAuthState] = useState<'loading' | 'authenticated' | 'unauthenticated'>(
-    'loading',
-  )
-  useEffect(() => {
-    void initializeTelegram().then((authenticated) => {
-      setAuthState(authenticated ? 'authenticated' : 'unauthenticated')
-    })
-  }, [])
-  if (authState === 'loading') return <AuthMessage title="Подключение к Telegram…" />
-  if (authState === 'unauthenticated') {
-    return <AuthMessage title="Откройте приложение через Telegram" />
+  const [authenticated, setAuthenticated] = useState(hasAccessToken())
+
+  function handleAuthenticated(auth: AuthResponse) {
+    setAccessToken(auth.access_token)
+    setAuthenticated(true)
   }
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<AppShell />}>
+        <Route path="login" element={<LoginPage onAuthenticated={handleAuthenticated} />} />
+        <Route element={authenticated ? <AppShell /> : <Navigate to="/login" replace />}>
           <Route index element={<CalendarPage />} />
           <Route path="busy/new" element={<BusyCreatePage />} />
           <Route path="availability" element={<AvailabilityPage />} />
@@ -39,17 +37,5 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
-  )
-}
-
-function AuthMessage({ title }: { title: string }) {
-  return (
-    <main className="auth-message">
-      <div className="auth-message__panel">
-        <span className="eyebrow">TimeTogether</span>
-        <h1>{title}</h1>
-        <p>Личные данные календаря доступны только после авторизации Telegram.</p>
-      </div>
-    </main>
   )
 }

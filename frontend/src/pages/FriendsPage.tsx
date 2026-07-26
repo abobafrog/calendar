@@ -1,5 +1,6 @@
 import { Check, Copy, Search, ShieldBan, UserMinus, X } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
@@ -19,6 +20,7 @@ export function FriendsPage() {
   const [tab, setTab] = useState<'friends' | 'incoming' | 'outgoing'>('friends')
   const [query, setQuery] = useState('')
   const [toast, setToast] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const currentUserQuery = useCurrentUser()
   const friendsQuery = useFriends()
@@ -30,9 +32,28 @@ export function FriendsPage() {
   const visibleFriends = friendsQuery.data ?? []
   const incomingRequests = incomingQuery.data ?? []
   const outgoingRequests = outgoingQuery.data ?? []
-  const inviteLink = `https://t.me/${import.meta.env.VITE_BOT_USERNAME ?? 'lloooooo_bot'}?start=invite_${currentUserQuery.data?.invite_code ?? ''}`
+  const inviteCode = currentUserQuery.data?.invite_code ?? ''
+  const inviteLink = `${window.location.origin}/friends?invite=${inviteCode}`
+  const showError = useCallback(
+    (error: unknown) => setToast(error instanceof Error ? error.message : 'Операция не выполнена'),
+    [],
+  )
 
-  const showError = (error: unknown) => setToast(error instanceof Error ? error.message : 'Операция не выполнена')
+  useEffect(() => {
+    const code = searchParams.get('invite')
+    if (!code || createRequest.isPending) return
+    void createRequest
+      .mutateAsync({ invite_code: code })
+      .then(async () => {
+        setToast('Приглашение отправлено')
+        setSearchParams({})
+        await queryClient.invalidateQueries({ queryKey: ['friend-requests'] })
+      })
+      .catch((error) => {
+        showError(error)
+        setSearchParams({})
+      })
+  }, [createRequest, queryClient, searchParams, setSearchParams, showError])
   return (
     <div className="page">
       <header className="page-header">
@@ -146,7 +167,7 @@ export function FriendsPage() {
           <GlassPanel className="invite-panel">
             <div>
               <span>Персональная ссылка</span>
-              <strong>Пригласить через Telegram</strong>
+              <strong>Пригласить на сайт</strong>
             </div>
             <GlassButton
               variant="icon"

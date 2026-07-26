@@ -1,4 +1,4 @@
-from app.schemas.auth import AuthResponse, TelegramAuthRequest
+from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest, TelegramAuthRequest
 from app.schemas.availability import AvailabilitySearchRequest, AvailabilitySearchResponse
 from app.schemas.calendar import BusyIntervalCreate, BusyIntervalResponse
 from app.schemas.friendships import FriendRequestCreate, FriendshipResponse
@@ -13,8 +13,10 @@ __all__ = [
     "BusyIntervalResponse",
     "FriendRequestCreate",
     "FriendshipResponse",
+    "LoginRequest",
     "MeetingCreate",
     "MeetingResponse",
+    "RegisterRequest",
     "TelegramAuthRequest",
     "UserResponse",
     "UserUpdate",

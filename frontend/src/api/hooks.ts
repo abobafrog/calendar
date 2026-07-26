@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { apiRequest } from './client'
+import { apiRequest, hasAccessToken } from './client'
 import type {
   BusyInterval,
   Friend,
@@ -11,7 +11,11 @@ import type {
 } from '../lib/types'
 
 export function useCurrentUser() {
-  return useQuery({ queryKey: ['me'], queryFn: () => apiRequest<User>('/users/me') })
+  return useQuery({
+    enabled: hasAccessToken(),
+    queryKey: ['me'],
+    queryFn: () => apiRequest<User>('/users/me'),
+  })
 }
 
 export function useUpdateCurrentUser() {

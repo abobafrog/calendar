@@ -6,6 +6,7 @@ export type ResponseStatus = 'pending' | 'accepted' | 'declined'
 export interface User {
   id: number
   telegram_id?: number
+  email?: string | null
   username: string | null
   first_name: string
   last_name: string | null
@@ -68,4 +69,11 @@ export interface FreeSlotData {
   start_at: string
   end_at: string
   duration_minutes: number
+}
+
+export interface AuthResponse {
+  access_token: string
+  token_type: 'bearer'
+  expires_at: string
+  user: User
 }

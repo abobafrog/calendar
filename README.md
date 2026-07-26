@@ -1,70 +1,101 @@
 # TimeTogether
 
-TimeTogether is an MVP Telegram Mini App for private collaborative scheduling. It lets a small group see only accepted friends' availability, calculate common free time, and propose meetings without leaking private event details.
+TimeTogether is a web MVP for private collaborative scheduling. Users sign up with email/password, add busy intervals, connect with friends, find common free slots and propose meetings.
 
-## Run locally
-
-1. Install Docker Desktop and start it.
-2. From this directory run:
+## Local Run
 
 ```bash
 cp .env.example .env
-docker compose up --build
+docker compose up -d --build
 ```
 
-The Mini App is available at `http://localhost:5173`, the API at `http://localhost:8000`, and API docs at `http://localhost:8000/docs` in development. Configure a real `BOT_TOKEN` and public HTTPS `MINI_APP_URL` before using Telegram. The stack starts only real-user mode; no demo users are created automatically.
+Open:
 
-## Useful commands
+- Web app: http://localhost:5173
+- API health: http://localhost:8000/health
+- API docs in development: http://localhost:8000/docs
 
-```bash
-make migrate       # apply Alembic migrations
-make lint          # Ruff and ESLint
-make typecheck     # mypy and TypeScript
+## Environment
+
+Required:
+
+```env
+APP_SECRET_KEY=replace-with-at-least-32-random-characters
+DATABASE_URL=postgresql+asyncpg://timetogether:timetogether@postgres:5432/timetogether
+REDIS_URL=redis://redis:6379/0
+FRONTEND_URL=http://localhost:5173
+ALLOWED_ORIGINS=http://localhost:5173
+VITE_API_URL=/api/v1
 ```
 
-The backend uses Python 3.12, FastAPI, SQLAlchemy async, Alembic, PostgreSQL, Redis, Pydantic v2 and aiogram 3. The Mini App uses React, TypeScript, Vite, TanStack Query, React Router, `@tma.js/sdk-react`, Lucide icons and regular CSS.
+The frontend Vite dev server proxies `/api` requests to the backend container.
 
 ## Architecture
 
 ```text
-Telegram Mini App -> REST API -> services -> repositories -> PostgreSQL
-       |                 |             |             |
-       |                 |             |             +-- users, friendships, calendars,
-       |                 |             |                 meetings, notifications
-       |                 |             +-- permissions, interval merging, availability,
-       |                 |                 meeting conflicts
-       |                 +-- Telegram init data verification -> short-lived JWT
-       +-- tma.js SDK: theme params, viewport, safe-area, raw init data
+React/Vite web app
+  -> FastAPI routers
+  -> services
+  -> repositories
+  -> SQLAlchemy async models
+  -> PostgreSQL
 
-Telegram Bot -> aiogram handlers -> services
-                         ^
-Redis rate limiting + one-time init-data replay keys + notification queue
+Redis powers existing rate limiting and background queues.
 ```
 
-Routers contain transport validation and dependency wiring only. Business rules live in services; object-level access is centralized in `app/services/permissions.py`. Repositories own SQLAlchemy queries.
+Core layers:
 
-## Privacy decisions
+- `backend/app/api/v1` - REST routers
+- `backend/app/schemas` - Pydantic request/response schemas
+- `backend/app/services` - business logic
+- `backend/app/repositories` - persistence queries
+- `backend/app/models` - database models
+- `backend/app/core/security.py` - JWT, password hashing, auth dependencies
+- `frontend/src/pages` - app screens
+- `frontend/src/components` - reusable glass UI components
 
-- Calendar access is allowed for the owner or an `accepted` friendship only.
-- `private` intervals expose only the busy fact to a friend; title is removed.
-- `friends` intervals expose the title to a friend.
-- `hidden` intervals are omitted from calendar responses but are included in availability calculations.
-- Exact username lookup, invite codes and Telegram deep links are supported. There is no public directory search.
-- The backend never trusts user identity fields from frontend payloads; it verifies Telegram init data, finds/creates by Telegram ID, and issues a short-lived JWT.
-- Init data is accepted only within its short IANA-time-aware validity window; invitations and lookup/availability searches are rate limited. Fresh init data can be reused when Telegram reloads the Mini App.
+## Auth
 
-## Time and meeting decisions
+The web app supports:
 
-- All stored datetimes are timezone-aware UTC values. IANA timezone names are validated with `zoneinfo`.
-- API request ranges use ISO 8601 offsets and are normalized to UTC.
-- Intervals use the half-open convention `[start_at, end_at)`.
-- Overlapping and touching personal busy intervals merge automatically. If merged intervals have different visibility, the result is downgraded to `private`.
-- Availability windows are defined in the requester's IANA timezone, converted to UTC, then intersected with the union of all participants' busy time. DST transitions are handled by local-time round trips.
-- A meeting is confirmed only after every participant accepts. Before confirmation, all participant rows are locked and conflicts are checked again. A conflict returns HTTP 409 with a generic warning and leaves the meeting pending.
-- Confirmed meetings create `BusyInterval` rows linked to the meeting. Cancelling a meeting removes those linked calendar rows.
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
 
-## MVP boundary
+Email/password auth stores only a PBKDF2 password hash and issues a short-lived TimeTogether JWT.
 
-Included: Telegram auth, users/settings, exact friend discovery, incoming/outgoing invitations, accept/reject/block/remove, private calendar intervals with bulk creation and merging, day/week-oriented Mini App calendar, friend overlay, common availability search, meeting proposals and responses, conflict checks, notification queue, bot commands and inline actions, themes, safe-area responsive UI, Docker Compose, Ruff, mypy, ESLint and Prettier.
+## Deployment Notes
 
-Intentionally deferred: real-time WebSocket updates, recurring rules beyond bulk repeated dates, calendar-provider sync, file attachments, group ownership/roles, full chat threads, push notification analytics, and production Telegram webhook deployment. These are outside the smallest privacy-safe MVP and can be added without moving business logic into routers or bot handlers.
+For Caddy on a single domain:
+
+```caddyfile
+froklalol.ru {
+    reverse_proxy /api/* localhost:8000
+    reverse_proxy localhost:5173
+}
+```
+
+Then set:
+
+```env
+FRONTEND_URL=https://froklalol.ru
+ALLOWED_ORIGINS=https://froklalol.ru
+VITE_API_URL=/api/v1
+```
+
+## Commands
+
+```bash
+docker compose ps
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose exec backend alembic upgrade head
+docker compose exec backend python -m app.db.seed
+```
+
+## Privacy Rules
+
+- A user sees full details of their own intervals.
+- Friends see availability only after an accepted friendship.
+- Private friend intervals expose only busy status.
+- Hidden intervals are used for availability calculations but not shown as details.
+- Calendar and meeting endpoints run backend permission checks; frontend state is not trusted.

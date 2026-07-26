@@ -11,6 +11,8 @@ from app.tasks.notifications import notification_worker
 
 async def main() -> None:
     settings = get_settings()
+    if settings.bot_token is None:
+        raise RuntimeError("BOT_TOKEN is required to run the legacy Telegram bot")
     configure_logging(settings.log_level)
     bot = Bot(settings.bot_token)
     redis = Redis.from_url(settings.redis_url, decode_responses=True)
