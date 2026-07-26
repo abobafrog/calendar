@@ -92,7 +92,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <PixelBlast
             variant="circle"
             pixelSize={6}
-            color="#8b7dff"
+            color="#7a787c"
             patternScale={2.5}
             patternDensity={1.1}
             pixelSizeJitter={0.5}

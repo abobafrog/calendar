@@ -11,18 +11,21 @@ export function AppShell() {
         <Suspense fallback={null}>
           <PixelBlast
             variant="circle"
-            pixelSize={7}
-            color="#8b7dff"
-            patternScale={2.2}
-            patternDensity={1.22}
-            pixelSizeJitter={0.45}
-            enableRipples={false}
+            pixelSize={6}
+            color="#7a787c"
+            patternScale={2.5}
+            patternDensity={1.1}
+            pixelSizeJitter={0.5}
+            enableRipples
+            rippleSpeed={0.4}
+            rippleThickness={0.12}
+            rippleIntensityScale={1.5}
             liquid
-            liquidStrength={0.08}
-            liquidRadius={1.1}
-            liquidWobbleSpeed={4.2}
-            speed={0.45}
-            edgeFade={0.18}
+            liquidStrength={0.12}
+            liquidRadius={1.2}
+            liquidWobbleSpeed={5}
+            speed={0.6}
+            edgeFade={0.22}
             transparent
           />
         </Suspense>
