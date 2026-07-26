@@ -18,7 +18,8 @@
   --text: #171622;
   --muted: #777487;
   --faint: #aaa6b7;
-  --line: rgba(88, 78, 117, 0.12);
+  --line: rgba(88, 78, 117, 0.42);
+  --grid-line: rgba(88, 78, 117, 0.12);
   --accent: #6558f4;
   --accent-strong: #5948ec;
   --accent-soft: rgba(101, 88, 244, 0.12);
@@ -40,7 +41,8 @@
     --text: #f5f3fa;
     --muted: #aaa6b7;
     --faint: #716d7f;
-    --line: rgba(237, 232, 255, 0.1);
+    --line: rgba(237, 232, 255, 0.42);
+    --grid-line: rgba(237, 232, 255, 0.1);
     --accent: #8b7dff;
     --accent-strong: #7565fb;
     --accent-soft: rgba(139, 125, 255, 0.16);
@@ -60,7 +62,8 @@
   --text: #f5f3fa;
   --muted: #aaa6b7;
   --faint: #716d7f;
-  --line: rgba(237, 232, 255, 0.1);
+  --line: rgba(237, 232, 255, 0.42);
+  --grid-line: rgba(237, 232, 255, 0.1);
   --accent: #8b7dff;
   --accent-strong: #7565fb;
   --accent-soft: rgba(139, 125, 255, 0.16);
@@ -79,7 +82,8 @@
   --text: #fff;
   --muted: #e4e4e7;
   --faint: #bbb;
-  --line: rgba(255, 255, 255, 0.32);
+  --line: rgba(255, 255, 255, 0.42);
+  --grid-line: rgba(255, 255, 255, 0.18);
   --accent: #9c8cff;
   --accent-strong: #8a76ff;
   --accent-soft: rgba(156, 140, 255, 0.25);
@@ -736,7 +740,7 @@ select:focus-visible {
   min-height: 520px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface-solid) 44%, transparent);
   box-shadow: var(--shadow);
   overflow: hidden;
 }
@@ -759,14 +763,14 @@ select:focus-visible {
   font-size: 10px;
 }
 .time-grid__canvas {
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--grid-line);
 }
 .time-grid__canvas > i {
   position: absolute;
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--line);
+  background: var(--grid-line);
 }
 .time-grid__now {
   position: absolute;
@@ -798,7 +802,7 @@ select:focus-visible {
 }
 .week-column {
   min-width: 0;
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--grid-line);
 }
 .week-column header {
   height: 37px;
@@ -826,7 +830,7 @@ select:focus-visible {
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--line);
+  background: var(--grid-line);
 }
 .week-column .busy-block {
   left: 2px;
