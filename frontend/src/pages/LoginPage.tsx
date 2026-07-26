@@ -29,7 +29,9 @@ type PreviewBlockStyle = CSSProperties & {
   '--tone': string
 }
 
-const PixelBlast = lazy(() => import('../components/PixelBlast').then((module) => ({ default: module.PixelBlast })))
+const ThemeBackground = lazy(() =>
+  import('../components/ThemeBackground').then((module) => ({ default: module.ThemeBackground })),
+)
 
 interface LoginPageProps {
   onAuthenticated: (auth: AuthResponse) => void
@@ -89,25 +91,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     <main className="login-page">
       <div className="login-background" aria-hidden="true">
         <Suspense fallback={null}>
-          <PixelBlast
-            variant="circle"
-            pixelSize={6}
-            color="#B497CF"
-            patternScale={3}
-            patternDensity={1.2}
-            pixelSizeJitter={0.5}
-            enableRipples
-            rippleSpeed={0.4}
-            rippleThickness={0.12}
-            rippleIntensityScale={1.5}
-            liquid
-            liquidStrength={0.12}
-            liquidRadius={1.2}
-            liquidWobbleSpeed={5}
-            speed={0.6}
-            edgeFade={0.25}
-            transparent
-          />
+          <ThemeBackground />
         </Suspense>
       </div>
       <section className="public-hero" aria-label="О проекте TimeTogether">
