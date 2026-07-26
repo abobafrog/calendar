@@ -148,11 +148,34 @@ select:focus-visible {
   min-height: 100vh;
   min-height: 100svh;
   margin: 0 auto;
-  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  background:
+    radial-gradient(circle at 82% 6%, rgba(139, 125, 255, 0.2), transparent 28%),
+    color-mix(in srgb, var(--bg) 74%, transparent);
   border-inline: 1px solid var(--line);
   box-shadow: 0 0 70px rgba(45, 38, 70, 0.06);
+  overflow: hidden;
+  isolation: isolate;
+}
+.app-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+.app-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 76%, transparent), color-mix(in srgb, var(--bg) 91%, transparent)),
+    radial-gradient(circle at 10% 0%, rgba(97, 210, 199, 0.1), transparent 30%);
 }
 .app-content {
+  position: relative;
+  z-index: 2;
   min-height: 100vh;
   min-height: 100svh;
   padding-bottom: calc(var(--nav-height) + 28px + env(safe-area-inset-bottom));
@@ -1742,16 +1765,16 @@ select:focus-visible {
 .login-background {
   position: fixed;
   inset: 0;
-  z-index: -2;
+  z-index: 0;
   pointer-events: none;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .login-page::before {
   content: '';
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 1;
   pointer-events: none;
   background: color-mix(in srgb, var(--bg) 72%, transparent);
   backdrop-filter: blur(1px);
@@ -1761,6 +1784,8 @@ select:focus-visible {
 .public-story,
 .public-preview,
 .login-panel {
+  position: relative;
+  z-index: 2;
   width: min(100%, 520px);
   margin-inline: auto;
 }
@@ -2173,6 +2198,52 @@ select:focus-visible {
   }
   .busy-block {
     width: 58%;
+  }
+}
+
+@media (max-width: 679px) {
+  .availability-page .form-section {
+    padding: 14px;
+    border-radius: 24px;
+  }
+
+  .availability-page .field-row,
+  .availability-page .field-row--two,
+  .availability-page .field-row--three {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .availability-page .field-row--two {
+    margin-top: 0;
+  }
+
+  .availability-page .field-row .field,
+  .availability-page .field-row .field:first-child,
+  .availability-page .field-row--two .field:first-child {
+    min-width: 0;
+    grid-column: auto;
+  }
+
+  .availability-page .field span {
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .availability-page .field input,
+  .availability-page .field select {
+    height: 52px;
+    min-height: 52px;
+    border-radius: 16px;
+    padding-inline: 14px;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  .availability-page .sticky-submit {
+    min-height: 56px;
+    margin-top: 10px;
   }
 }
 
