@@ -1962,7 +1962,12 @@ select:focus-visible {
     grid-column: auto;
   }
   .field-row--three {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .availability-page .field-row--two,
+  .availability-page .field-row--three {
+    grid-template-columns: 1fr;
   }
   .bottom-navigation a {
     min-height: 60px;

@@ -38,6 +38,10 @@ export function FriendsPage() {
     (error: unknown) => setToast(error instanceof Error ? error.message : 'Операция не выполнена'),
     [],
   )
+  const invalidateSocialData = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['friends'], refetchType: 'active' })
+    await queryClient.invalidateQueries({ queryKey: ['friend-requests'], refetchType: 'active' })
+  }, [queryClient])
 
   useEffect(() => {
     const code = searchParams.get('invite')
@@ -47,13 +51,13 @@ export function FriendsPage() {
       .then(async () => {
         setToast('Приглашение отправлено')
         setSearchParams({})
-        await queryClient.invalidateQueries({ queryKey: ['friend-requests'] })
+        await invalidateSocialData()
       })
       .catch((error) => {
         showError(error)
         setSearchParams({})
       })
-  }, [createRequest, queryClient, searchParams, setSearchParams, showError])
+  }, [createRequest, invalidateSocialData, searchParams, setSearchParams, showError])
   return (
     <div className="page">
       <header className="page-header">
@@ -93,6 +97,12 @@ export function FriendsPage() {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              name="exact-username"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              inputMode="text"
               placeholder="Точный @username"
               aria-label="Поиск по точному username"
             />
@@ -107,7 +117,7 @@ export function FriendsPage() {
                   await createRequest.mutateAsync({ username: query.trim().replace(/^@/, '') })
                   setQuery('')
                   setToast('Приглашение отправлено')
-                  await queryClient.invalidateQueries({ queryKey: ['friend-requests'] })
+                  await invalidateSocialData()
                 } catch (error) {
                   showError(error)
                 }
@@ -136,7 +146,7 @@ export function FriendsPage() {
                         try {
                           await friendAction.mutateAsync({ userId: friend.id, action: 'remove' })
                           setToast('Друг удалён')
-                          await queryClient.invalidateQueries({ queryKey: ['friends'] })
+                          await invalidateSocialData()
                         } catch (error) {
                           showError(error)
                         }
@@ -151,7 +161,7 @@ export function FriendsPage() {
                         try {
                           await friendAction.mutateAsync({ userId: friend.id, action: 'block' })
                           setToast('Пользователь заблокирован')
-                          await queryClient.invalidateQueries({ queryKey: ['friends'] })
+                          await invalidateSocialData()
                         } catch (error) {
                           showError(error)
                         }
@@ -202,8 +212,7 @@ export function FriendsPage() {
                       try {
                         await requestResponse.mutateAsync({ id: request.id, action: 'accept' })
                         setToast('Приглашение принято')
-                        await queryClient.invalidateQueries({ queryKey: ['friends'] })
-                        await queryClient.invalidateQueries({ queryKey: ['friend-requests'] })
+                        await invalidateSocialData()
                       } catch (error) {
                         showError(error)
                       }
@@ -219,7 +228,7 @@ export function FriendsPage() {
                       try {
                         await requestResponse.mutateAsync({ id: request.id, action: 'reject' })
                         setToast('Приглашение отклонено')
-                        await queryClient.invalidateQueries({ queryKey: ['friend-requests'] })
+                        await invalidateSocialData()
                       } catch (error) {
                         showError(error)
                       }
