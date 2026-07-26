@@ -2209,13 +2209,15 @@ select:focus-visible {
 
   .availability-page .field-row--two {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    column-gap: 12px;
+    row-gap: 10px;
     margin-top: 0;
   }
 
   .availability-page .field-row--three {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    column-gap: 12px;
+    row-gap: 10px;
   }
 
   .availability-page .field-row--three .field:nth-child(3) {
@@ -2225,8 +2227,10 @@ select:focus-visible {
   .availability-page .field-row .field,
   .availability-page .field-row .field:first-child,
   .availability-page .field-row--two .field:first-child {
+    width: 100%;
     min-width: 0;
     grid-column: auto;
+    overflow: hidden;
   }
 
   .availability-page .field span {
@@ -2236,12 +2240,29 @@ select:focus-visible {
 
   .availability-page .field input,
   .availability-page .field select {
-    height: 36px;
-    min-height: 36px;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 44px;
+    min-height: 44px;
     border-radius: 11px;
-    padding-inline: 6px;
-    font-size: 11px;
+    padding-inline: 8px;
+    font-size: 12px;
     line-height: 1.2;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .availability-page .field input[type='date'],
+  .availability-page .field input[type='time'] {
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .availability-page .field input::-webkit-date-and-time-value {
+    min-width: 0;
+    margin: 0;
     text-align: center;
   }
 
@@ -2303,19 +2324,21 @@ select:focus-visible {
   }
   .availability-page .field-row--two {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 10px;
   }
   .availability-page .field-row--three {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 10px;
   }
   .availability-page .field-row--three .field:nth-child(3) {
     grid-column: 1 / -1;
   }
   .availability-page .field input,
   .availability-page .field select {
-    height: 34px;
-    min-height: 34px;
-    border-radius: 12px;
-    font-size: 10px;
+    height: 44px;
+    min-height: 44px;
+    border-radius: 11px;
+    font-size: 11px;
   }
   .bottom-navigation a {
     min-height: 60px;
