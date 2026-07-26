@@ -3,6 +3,7 @@ import {
   ChevronRight,
   Clock3,
   Copy,
+  Edit2,
   Globe2,
   Moon,
   ShieldCheck,
@@ -31,7 +32,7 @@ const themes: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
 export function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const [toast, setToast] = useState<string | null>(null)
-  const [sheet, setSheet] = useState<'timezone' | 'workday' | 'format' | null>(null)
+  const [sheet, setSheet] = useState<'profile' | 'timezone' | 'workday' | 'format' | null>(null)
   const currentUserQuery = useCurrentUser()
   const updateUser = useUpdateCurrentUser()
   const queryClient = useQueryClient()
@@ -62,16 +63,25 @@ export function SettingsPage() {
           </h2>
           <span>@{currentUser.username}</span>
         </div>
-        <GlassButton
-          variant="icon"
-          aria-label="Скопировать код"
-          onClick={() => {
-            void navigator.clipboard?.writeText(currentUser.invite_code ?? '')
-            setToast('Код скопирован')
-          }}
-        >
-          <Copy size={18} />
-        </GlassButton>
+        <div className="profile-actions">
+          <GlassButton
+            variant="icon"
+            aria-label="Редактировать профиль"
+            onClick={() => setSheet('profile')}
+          >
+            <Edit2 size={18} />
+          </GlassButton>
+          <GlassButton
+            variant="icon"
+            aria-label="Скопировать код"
+            onClick={() => {
+              void navigator.clipboard?.writeText(currentUser.invite_code ?? '')
+              setToast('Код скопирован')
+            }}
+          >
+            <Copy size={18} />
+          </GlassButton>
+        </div>
       </GlassPanel>
       <section className="settings-section">
         <h2>Оформление</h2>
@@ -163,8 +173,13 @@ export function SettingsPage() {
         расчёта свободного времени.
       </p>
       <SettingsSheet
+        key={`${sheet ?? 'closed'}-${currentUser.first_name}-${currentUser.last_name ?? ''}-${currentUser.username ?? ''}-${currentUser.photo_url ?? ''}-${currentUser.timezone}`}
         sheet={sheet}
         timezone={currentUser.timezone ?? 'UTC'}
+        firstName={currentUser.first_name}
+        lastName={currentUser.last_name ?? ''}
+        username={currentUser.username ?? ''}
+        photoUrl={currentUser.photo_url ?? ''}
         workdayStart={workdayStart}
         workdayEnd={workdayEnd}
         timeFormat={timeFormat}
@@ -181,6 +196,10 @@ export function SettingsPage() {
 function SettingsSheet({
   sheet,
   timezone,
+  firstName,
+  lastName,
+  username,
+  photoUrl,
   workdayStart,
   workdayEnd,
   timeFormat,
@@ -189,8 +208,12 @@ function SettingsSheet({
   onClose,
   onSave,
 }: {
-  sheet: 'timezone' | 'workday' | 'format' | null
+  sheet: 'profile' | 'timezone' | 'workday' | 'format' | null
   timezone: string
+  firstName: string
+  lastName: string
+  username: string
+  photoUrl: string
   workdayStart: string
   workdayEnd: string
   timeFormat: '12h' | '24h'
@@ -200,14 +223,78 @@ function SettingsSheet({
   onSave: (payload: Partial<User>, message: string) => Promise<void>
 }) {
   const [zone, setZone] = useState(timezone)
+  const [profileFirstName, setProfileFirstName] = useState(firstName)
+  const [profileLastName, setProfileLastName] = useState(lastName)
+  const [profileUsername, setProfileUsername] = useState(username)
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(photoUrl)
   const [start, setStart] = useState(workdayStart)
   const [end, setEnd] = useState(workdayEnd)
   const [format, setFormat] = useState<'12h' | '24h'>(timeFormat)
   const [weekStart, setWeekStart] = useState(weekStartsOn)
   const title =
-    sheet === 'timezone' ? 'Часовой пояс' : sheet === 'workday' ? 'Рабочее время' : 'Формат времени'
+    sheet === 'profile'
+      ? 'Профиль'
+      : sheet === 'timezone'
+        ? 'Часовой пояс'
+        : sheet === 'workday'
+          ? 'Рабочее время'
+          : 'Формат времени'
   return (
     <ModalSheet open={sheet !== null} title={title} onClose={onClose}>
+      {sheet === 'profile' && (
+        <div className="sheet-form">
+          <div className="field-row field-row--two">
+            <label className="field">
+              <span>Имя</span>
+              <input
+                value={profileFirstName}
+                onChange={(event) => setProfileFirstName(event.target.value)}
+                placeholder="Тимофей"
+              />
+            </label>
+            <label className="field">
+              <span>Фамилия</span>
+              <input
+                value={profileLastName}
+                onChange={(event) => setProfileLastName(event.target.value)}
+                placeholder="Иванов"
+              />
+            </label>
+          </div>
+          <label className="field">
+            <span>@username</span>
+            <input
+              value={profileUsername}
+              onChange={(event) => setProfileUsername(event.target.value)}
+              placeholder="tima_schedule"
+            />
+          </label>
+          <label className="field">
+            <span>Фото URL</span>
+            <input
+              value={profilePhotoUrl}
+              onChange={(event) => setProfilePhotoUrl(event.target.value)}
+              placeholder="https://..."
+            />
+          </label>
+          <GlassButton
+            disabled={saving}
+            onClick={() =>
+              void onSave(
+                {
+                  first_name: profileFirstName,
+                  last_name: profileLastName || null,
+                  username: profileUsername || null,
+                  photo_url: profilePhotoUrl || null,
+                },
+                'Профиль сохранён',
+              )
+            }
+          >
+            Сохранить
+          </GlassButton>
+        </div>
+      )}
       {sheet === 'timezone' && (
         <div className="sheet-form">
           <label className="field">
@@ -219,6 +306,8 @@ function SettingsSheet({
                 'Europe/Amsterdam',
                 'Asia/Tbilisi',
                 'Asia/Dubai',
+                'Asia/Almaty',
+                'Asia/Yekaterinburg',
                 'America/New_York',
               ].map((item) => (
                 <option key={item} value={item}>

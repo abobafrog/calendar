@@ -29,6 +29,10 @@ class UserResponse(UserSummary):
 
 
 class UserUpdate(APIModel):
+    first_name: str | None = Field(default=None, min_length=1, max_length=128)
+    last_name: str | None = Field(default=None, max_length=128)
+    username: str | None = Field(default=None, min_length=3, max_length=64, pattern=r"^[a-zA-Z0-9_.-]+$")
+    photo_url: str | None = Field(default=None, max_length=2048)
     timezone: str | None = None
     week_starts_on: int | None = Field(default=None, ge=1, le=7)
     time_format: TimeFormat | None = None

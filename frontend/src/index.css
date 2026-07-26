@@ -338,8 +338,8 @@ select:focus-visible {
 }
 .date-switcher {
   height: 44px;
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   border: 1px solid var(--line);
   border-radius: 15px;
   background: var(--surface);
@@ -347,7 +347,7 @@ select:focus-visible {
 }
 .date-switcher button {
   height: 44px;
-  min-width: 40px;
+  min-width: 0;
   border: 0;
   display: grid;
   place-items: center;
@@ -355,11 +355,14 @@ select:focus-visible {
   cursor: pointer;
 }
 .date-switcher__label {
-  min-width: 104px !important;
-  padding: 0 7px;
+  min-width: 0 !important;
+  padding: 0 10px;
   color: var(--text);
   font-size: 13px;
   font-weight: 720;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .segmented-control {
   display: inline-grid;
@@ -1457,6 +1460,10 @@ select:focus-visible {
   color: var(--muted);
   font-size: 11px;
 }
+.profile-actions {
+  display: flex;
+  gap: 8px;
+}
 .settings-section {
   margin-top: 22px;
 }
@@ -1533,6 +1540,44 @@ select:focus-visible {
   color: var(--muted);
   font-size: 10px;
   line-height: 1.55;
+}
+
+.day-agenda {
+  margin-top: 14px;
+}
+.day-agenda__list {
+  display: grid;
+  gap: 10px;
+}
+.day-agenda__item,
+.day-agenda__empty {
+  padding: 12px;
+}
+.day-agenda__item {
+  display: grid;
+  gap: 10px;
+}
+.day-agenda__time strong,
+.day-agenda__empty strong,
+.day-agenda__body strong {
+  display: block;
+  font-size: 13px;
+}
+.day-agenda__time span,
+.day-agenda__empty span,
+.day-agenda__body span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.day-agenda__body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.day-agenda__body > div {
+  min-width: 0;
 }
 
 .sheet-backdrop {
@@ -1801,6 +1846,28 @@ select:focus-visible {
   background: var(--surface-muted);
   font: inherit;
   font-weight: 750;
+}
+.auth-form select {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--text);
+  background: var(--surface-muted);
+  font: inherit;
+  font-weight: 750;
+}
+
+.auth-hint {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+  background: var(--surface-muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .auth-error {

@@ -32,6 +32,13 @@ class UserRepository:
         result = await self.session.scalars(select(User).where(User.invite_code == invite_code))
         return result.first()
 
+    async def is_username_taken(self, username: str, *, exclude_user_id: int | None = None) -> bool:
+        normalized = username.removeprefix("@").lower()
+        query = select(User.id).where(func.lower(User.username) == normalized)
+        if exclude_user_id is not None:
+            query = query.where(User.id != exclude_user_id)
+        return await self.session.scalar(query) is not None
+
     async def get_many(self, user_ids: list[int]) -> list[User]:
         result = await self.session.scalars(select(User).where(User.id.in_(user_ids)))
         return list(result)

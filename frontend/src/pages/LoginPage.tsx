@@ -6,6 +6,22 @@ import { apiRequest } from '../api/client'
 import type { AuthResponse } from '../lib/types'
 
 type AuthMode = 'login' | 'register'
+const TIMEZONE_OPTIONS = [
+  'UTC',
+  'Europe/Moscow',
+  'Europe/Kaliningrad',
+  'Europe/Amsterdam',
+  'Europe/Berlin',
+  'Europe/London',
+  'Asia/Tbilisi',
+  'Asia/Dubai',
+  'Asia/Almaty',
+  'Asia/Yekaterinburg',
+  'Asia/Novosibirsk',
+  'America/New_York',
+  'America/Chicago',
+  'America/Los_Angeles',
+]
 
 interface LoginPageProps {
   onAuthenticated: (auth: AuthResponse) => void
@@ -92,11 +108,20 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             <>
               <label>
                 Имя
-                <input value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
+                <input
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
+                  placeholder="Тимофей"
+                  required
+                />
               </label>
               <label>
                 Фамилия
-                <input value={lastName} onChange={(event) => setLastName(event.target.value)} />
+                <input
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                  placeholder="Иванов"
+                />
               </label>
               <label>
                 @username
@@ -109,7 +134,13 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               </label>
               <label>
                 Часовой пояс
-                <input value={timezone} onChange={(event) => setTimezone(event.target.value)} />
+                <select value={timezone} onChange={(event) => setTimezone(event.target.value)}>
+                  {TIMEZONE_OPTIONS.map((zone) => (
+                    <option key={zone} value={zone}>
+                      {zone}
+                    </option>
+                  ))}
+                </select>
               </label>
             </>
           )}
@@ -120,6 +151,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               autoComplete="email"
               inputMode="email"
               type="email"
+              placeholder="name@example.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
@@ -130,12 +162,19 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             <input
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               type="password"
+              placeholder="••••••••"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               minLength={mode === 'register' ? 8 : 1}
               required
             />
           </label>
+
+          {mode === 'register' && (
+            <p className="auth-hint">
+              Примеры: имя «Тимофей», username «tima_schedule», email «name@example.com».
+            </p>
+          )}
 
           {error && <p className="auth-error">{error}</p>}
 

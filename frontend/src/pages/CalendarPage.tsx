@@ -5,8 +5,11 @@ import { useCalendarRange, useCurrentUser, useFriendCalendarRange, useFriends } 
 import { DateSwitcher } from '../components/DateSwitcher'
 import { FriendSelector } from '../components/FriendSelector'
 import { GlassButton } from '../components/GlassButton'
+import { GlassPanel } from '../components/GlassPanel'
+import { UserAvatar } from '../components/UserAvatar'
 import { TimeGrid } from '../components/TimeGrid'
 import { colorForUser } from '../lib/colors'
+import { formatDateInZone, formatTimeInZone } from '../lib/time'
 import type { BusyInterval, Friend, User } from '../lib/types'
 
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
@@ -33,6 +36,13 @@ export function CalendarPage() {
   const shownIntervals = useMemo(
     () => [...(calendarQuery.data ?? []), ...selectedFriendIntervals],
     [calendarQuery.data, selectedFriendIntervals],
+  )
+  const dayIntervals = useMemo(
+    () =>
+      shownIntervals
+        .filter((interval) => new Date(interval.start_at).toDateString() === date.toDateString())
+        .sort((left, right) => new Date(left.start_at).getTime() - new Date(right.start_at).getTime()),
+    [date, shownIntervals],
   )
   const monday = useMemo(() => {
     const next = new Date(date)
@@ -152,6 +162,60 @@ export function CalendarPage() {
               timeFormat={currentUserQuery.data.time_format ?? '24h'}
             />
           </div>
+          {view === 'day' && (
+            <section className="day-agenda">
+              <div className="section-heading">
+                <div>
+                  <span>День</span>
+                  <h2>{date.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
+                </div>
+                <span className="selection-count">{dayIntervals.length || '0'}</span>
+              </div>
+              <div className="day-agenda__list">
+                {dayIntervals.length ? (
+                  dayIntervals.map((interval) => {
+                    const owner =
+                      interval.user_id === currentUserQuery.data.id
+                        ? currentUserQuery.data
+                        : availableFriends.find((friend) => friend.id === interval.user_id)
+                    const title = interval.title ?? 'Занят'
+                    return (
+                      <GlassPanel key={interval.id} className="day-agenda__item">
+                        <div className="day-agenda__time">
+                          <strong>
+                            {formatTimeInZone(
+                              interval.start_at,
+                              currentUserQuery.data.timezone ?? 'UTC',
+                              currentUserQuery.data.time_format ?? '24h',
+                            )}{' '}
+                            —{' '}
+                            {formatTimeInZone(
+                              interval.end_at,
+                              currentUserQuery.data.timezone ?? 'UTC',
+                              currentUserQuery.data.time_format ?? '24h',
+                            )}
+                          </strong>
+                          <span>{formatDateInZone(interval.start_at, currentUserQuery.data.timezone ?? 'UTC')}</span>
+                        </div>
+                        <div className="day-agenda__body">
+                          <UserAvatar user={owner ?? currentUserQuery.data} size="sm" />
+                          <div>
+                            <strong>{title}</strong>
+                            <span>{owner ? owner.first_name : 'Вы'}</span>
+                          </div>
+                        </div>
+                      </GlassPanel>
+                    )
+                  })
+                ) : (
+                  <GlassPanel className="day-agenda__empty">
+                    <strong>В этот день ничего не занято</strong>
+                    <span>Можно выбрать другой день или добавить интервалы.</span>
+                  </GlassPanel>
+                )}
+              </div>
+            </section>
+          )}
         </>
       )}
       <Link to="/busy/new" className="floating-action" aria-label="Добавить занятость">
