@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
-import type { FormEvent } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
+import type { CSSProperties, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CalendarDays, LogIn, UserPlus } from 'lucide-react'
+import { CalendarDays, Clock3, LockKeyhole, LogIn, SearchCheck, UserPlus, UsersRound } from 'lucide-react'
 import { apiRequest } from '../api/client'
 import type { AuthResponse } from '../lib/types'
 
@@ -22,6 +22,14 @@ const TIMEZONE_OPTIONS = [
   'America/Chicago',
   'America/Los_Angeles',
 ]
+
+type PreviewBlockStyle = CSSProperties & {
+  '--top': string
+  '--height': string
+  '--tone': string
+}
+
+const PixelBlast = lazy(() => import('../components/PixelBlast').then((module) => ({ default: module.PixelBlast })))
 
 interface LoginPageProps {
   onAuthenticated: (auth: AuthResponse) => void
@@ -79,16 +87,110 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
 
   return (
     <main className="login-page">
-      <section className="login-hero" aria-label="TimeTogether">
+      <div className="login-background" aria-hidden="true">
+        <Suspense fallback={null}>
+          <PixelBlast
+            variant="circle"
+            pixelSize={6}
+            color="#8b7dff"
+            patternScale={2.5}
+            patternDensity={1.1}
+            pixelSizeJitter={0.5}
+            enableRipples
+            rippleSpeed={0.4}
+            rippleThickness={0.12}
+            rippleIntensityScale={1.5}
+            liquid
+            liquidStrength={0.12}
+            liquidRadius={1.2}
+            liquidWobbleSpeed={5}
+            speed={0.6}
+            edgeFade={0.22}
+            transparent
+          />
+        </Suspense>
+      </div>
+      <section className="public-hero" aria-label="О проекте TimeTogether">
         <div className="login-hero__badge">
           <CalendarDays size={22} />
           <span>TimeTogether</span>
         </div>
-        <h1>Общий календарь без лишнего шума</h1>
-        <p>Добавляйте занятость, выбирайте друзей и находите время, когда все свободны.</p>
+        <h1>Общий календарь для встреч без переписок на весь день</h1>
+        <p>
+          TimeTogether помогает друзьям и небольшим командам видеть только взаимную занятость,
+          находить общие свободные окна и договариваться о встречах без раскрытия личных деталей.
+        </p>
+        <div className="public-hero__actions">
+          <button type="button" onClick={() => setMode('register')}>
+            <UserPlus size={19} />
+            Создать аккаунт
+          </button>
+          <button type="button" onClick={() => setMode('login')}>
+            <LogIn size={19} />
+            Войти
+          </button>
+        </div>
+      </section>
+
+      <section className="public-story" aria-label="Возможности проекта">
+        <article>
+          <span>
+            <UsersRound size={20} />
+          </span>
+          <h2>Только принятые друзья</h2>
+          <p>Календарь и связи закрыты от посторонних. Доступ появляется только после взаимного принятия.</p>
+        </article>
+        <article>
+          <span>
+            <SearchCheck size={20} />
+          </span>
+          <h2>Поиск общего времени</h2>
+          <p>Выбираете участников, даты, часы и минимальную длительность, а система предлагает свободные интервалы.</p>
+        </article>
+        <article>
+          <span>
+            <LockKeyhole size={20} />
+          </span>
+          <h2>Приватность событий</h2>
+          <p>Для личной занятости можно показывать друзьям только статус «занят», без названия и деталей.</p>
+        </article>
+      </section>
+
+      <section className="public-preview" aria-label="Как выглядит планирование">
+        <div className="mini-calendar-preview">
+          <div>
+            <strong>Июль</strong>
+            <span>общее окно найдено</span>
+          </div>
+          <div className="preview-week">
+            {['Пн', 'Вт', 'Ср', 'Чт', 'Пт'].map((day, index) => (
+              <i key={day} className={index === 3 ? 'active' : ''}>
+                {day}
+              </i>
+            ))}
+          </div>
+          <div className="preview-timeline">
+            <b style={{ '--top': '18%', '--height': '24%', '--tone': 'var(--accent)' } as PreviewBlockStyle}>
+              10:00
+            </b>
+            <b style={{ '--top': '48%', '--height': '18%', '--tone': '#61d2c7' } as PreviewBlockStyle}>
+              14:00
+            </b>
+            <em>16:00 — 17:30 свободно для всех</em>
+          </div>
+        </div>
+        <div>
+          <Clock3 size={26} />
+          <h2>Сначала отметьте занятость, затем приглашайте людей</h2>
+          <p>
+            Для MVP доступны регистрация, друзья, личные интервалы, общий поиск времени,
+            предложения встреч и настройки профиля.
+          </p>
+        </div>
       </section>
 
       <section className="login-panel" aria-label={title}>
+        <span className="auth-anchor">Авторизация</span>
         <div className="auth-tabs">
           <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => setMode('login')}>
             Вход
@@ -183,7 +285,6 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             {busy ? 'Подождите…' : actionText}
           </button>
         </form>
-
       </section>
     </main>
   )
