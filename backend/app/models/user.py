@@ -20,6 +20,7 @@ class User(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     telegram_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, index=True)
+    # Legacy nullable column kept for compatibility with already deployed databases.
     email: Mapped[str | None] = mapped_column(String(320), unique=True, index=True)
     password_hash: Mapped[str | None] = mapped_column(String(512))
     username: Mapped[str | None] = mapped_column(String(64), index=True)

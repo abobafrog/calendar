@@ -10,7 +10,7 @@ import {
   Sun,
   SunMoon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
@@ -23,7 +23,6 @@ import { formatLocalClockTime } from '../lib/time'
 import type { ThemeMode, User } from '../lib/types'
 
 const themes: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
-  { value: 'telegram', label: 'Telegram', icon: SunMoon },
   { value: 'light', label: 'Светлая', icon: Sun },
   { value: 'dark', label: 'Тёмная', icon: Moon },
   { value: 'contrast', label: 'Контраст', icon: ShieldCheck },
@@ -43,6 +42,16 @@ export function SettingsPage() {
     await queryClient.invalidateQueries({ queryKey: ['me'] })
     setSheet(null)
     setToast(message)
+  }
+  const setNotificationsEnabled = async (enabled: boolean) => {
+    let message = enabled ? 'Уведомления сайта включены' : 'Уведомления выключены'
+    if (enabled && 'Notification' in window && window.Notification.permission === 'default') {
+      const permission = await window.Notification.requestPermission()
+      if (permission !== 'granted') {
+        message = 'Внутренние уведомления включены, системные запрещены браузером'
+      }
+    }
+    await saveUser({ notifications_enabled: enabled }, message)
   }
   const workdayStart = (currentUser.workday_start ?? '09:00').slice(0, 5)
   const workdayEnd = (currentUser.workday_end ?? '18:00').slice(0, 5)
@@ -147,10 +156,7 @@ export function SettingsPage() {
               type="checkbox"
               checked={currentUser.notifications_enabled ?? true}
               onChange={(event) => {
-                void saveUser(
-                  { notifications_enabled: event.target.checked },
-                  event.target.checked ? 'Уведомления включены' : 'Уведомления выключены',
-                )
+                void setNotificationsEnabled(event.target.checked)
               }}
             />
             <i />
@@ -231,6 +237,31 @@ function SettingsSheet({
   const [end, setEnd] = useState(workdayEnd)
   const [format, setFormat] = useState<'12h' | '24h'>(timeFormat)
   const [weekStart, setWeekStart] = useState(weekStartsOn)
+  const dirty =
+    (sheet === 'profile' &&
+      (profileFirstName !== firstName ||
+        profileLastName !== lastName ||
+        profileUsername !== username ||
+        profilePhotoUrl !== photoUrl)) ||
+    (sheet === 'timezone' && zone !== timezone) ||
+    (sheet === 'workday' && (start !== workdayStart || end !== workdayEnd)) ||
+    (sheet === 'format' && (format !== timeFormat || weekStart !== weekStartsOn))
+
+  useEffect(() => {
+    if (!dirty) return
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warnBeforeUnload)
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload)
+  }, [dirty])
+
+  function requestClose() {
+    if (!dirty || window.confirm('Изменения не сохранены и исчезнут. Закрыть без сохранения?')) {
+      onClose()
+    }
+  }
   const title =
     sheet === 'profile'
       ? 'Профиль'
@@ -240,7 +271,7 @@ function SettingsSheet({
           ? 'Рабочее время'
           : 'Формат времени'
   return (
-    <ModalSheet open={sheet !== null} title={title} onClose={onClose}>
+    <ModalSheet open={sheet !== null} title={title} onClose={requestClose}>
       {sheet === 'profile' && (
         <div className="sheet-form">
           <div className="field-row field-row--two">
@@ -278,18 +309,20 @@ function SettingsSheet({
             />
           </label>
           <GlassButton
-            disabled={saving}
-            onClick={() =>
+            disabled={saving || !profileFirstName.trim() || !profileUsername.trim()}
+            onClick={() => {
+              if (!window.confirm('Сохранить изменения профиля? Username используется для входа.'))
+                return
               void onSave(
                 {
                   first_name: profileFirstName,
                   last_name: profileLastName || null,
-                  username: profileUsername || null,
+                  username: profileUsername,
                   photo_url: profilePhotoUrl || null,
                 },
                 'Профиль сохранён',
               )
-            }
+            }}
           >
             Сохранить
           </GlassButton>

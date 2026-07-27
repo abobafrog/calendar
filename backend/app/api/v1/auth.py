@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import Settings, get_settings
 from app.db.session import get_session
 from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest, TelegramAuthRequest
 from app.services.auth import AuthService
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

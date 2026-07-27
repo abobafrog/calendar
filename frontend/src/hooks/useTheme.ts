@@ -3,10 +3,13 @@ import type { ThemeMode } from '../lib/types'
 
 const STORAGE_KEY = 'timetogether-theme'
 
+function readStoredTheme(): ThemeMode {
+  const stored = localStorage.getItem(STORAGE_KEY)
+  return stored === 'light' || stored === 'contrast' ? stored : 'dark'
+}
+
 export function useTheme() {
-  const [theme, setTheme] = useState<ThemeMode>(
-    () => (localStorage.getItem(STORAGE_KEY) as ThemeMode) || 'telegram',
-  )
+  const [theme, setTheme] = useState<ThemeMode>(readStoredTheme)
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     localStorage.setItem(STORAGE_KEY, theme)

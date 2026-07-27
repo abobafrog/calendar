@@ -16,7 +16,6 @@ class UserSummary(APIModel):
 
 class UserResponse(UserSummary):
     telegram_id: int | None = None
-    email: str | None = None
     timezone: str
     invite_code: str
     week_starts_on: int

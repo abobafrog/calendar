@@ -32,6 +32,8 @@ async def verify_telegram_init_data(
     settings: Settings,
     now: datetime | None = None,
 ) -> VerifiedTelegramData:
+    if not settings.bot_token:
+        raise AppError(503, "telegram_auth_unavailable", "Telegram authentication is not configured")
     if not init_data or len(init_data) > 16_384:
         raise AppError(400, "invalid_init_data", "Telegram init data is missing or too large")
 

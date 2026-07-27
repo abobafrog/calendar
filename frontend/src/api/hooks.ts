@@ -6,6 +6,7 @@ import type {
   FriendRequest,
   FreeSlotData,
   Meeting,
+  SiteNotification,
   User,
   UserCalendar,
 } from '../lib/types'
@@ -141,5 +142,20 @@ export function useMeetingResponse() {
   return useMutation({
     mutationFn: ({ id, action }: { id: number; action: 'accept' | 'decline' }) =>
       apiRequest<Meeting>(`/meetings/${id}/${action}`, { method: 'POST' }),
+  })
+}
+
+export function useNotifications() {
+  return useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => apiRequest<SiteNotification[]>('/notifications?unread_only=true&limit=50'),
+    refetchInterval: 15_000,
+  })
+}
+
+export function useMarkNotificationRead() {
+  return useMutation({
+    mutationFn: (id: number) =>
+      apiRequest<SiteNotification>(`/notifications/${id}/read`, { method: 'POST' }),
   })
 }

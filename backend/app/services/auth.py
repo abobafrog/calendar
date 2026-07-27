@@ -37,14 +37,11 @@ class AuthService:
 
     async def register(self, payload: RegisterRequest) -> AuthResponse:
         repository = UserRepository(self.session)
-        if await repository.get_by_email(payload.email):
-            raise AppError(409, "email_already_registered", "User with this email already exists")
-        if payload.username and await repository.get_by_username(payload.username):
+        if await repository.get_by_username(payload.username):
             raise AppError(409, "username_already_registered", "User with this username already exists")
 
         try:
             user = await repository.create_password_user(
-                email=payload.email,
                 password_hash=hash_password(payload.password),
                 first_name=payload.first_name,
                 last_name=payload.last_name,
@@ -60,8 +57,8 @@ class AuthService:
         return AuthResponse(access_token=token, expires_at=expires_at, user=UserResponse.model_validate(user))
 
     async def login(self, payload: LoginRequest) -> AuthResponse:
-        user = await UserRepository(self.session).get_by_email(payload.email)
+        user = await UserRepository(self.session).get_by_username(payload.username)
         if user is None or not verify_password(payload.password, user.password_hash):
-            raise AppError(401, "invalid_credentials", "Email or password is incorrect")
+            raise AppError(401, "invalid_credentials", "Username or password is incorrect")
         token, expires_at = create_access_token(user.id, self.settings)
         return AuthResponse(access_token=token, expires_at=expires_at, user=UserResponse.model_validate(user))

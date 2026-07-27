@@ -1,4 +1,4 @@
-export type ThemeMode = 'telegram' | 'light' | 'dark' | 'contrast'
+export type ThemeMode = 'light' | 'dark' | 'contrast'
 export type Visibility = 'private' | 'friends' | 'hidden'
 export type MeetingStatus = 'pending' | 'confirmed' | 'cancelled'
 export type ResponseStatus = 'pending' | 'accepted' | 'declined'
@@ -6,7 +6,6 @@ export type ResponseStatus = 'pending' | 'accepted' | 'declined'
 export interface User {
   id: number
   telegram_id?: number
-  email?: string | null
   username: string | null
   first_name: string
   last_name: string | null
@@ -76,4 +75,13 @@ export interface AuthResponse {
   token_type: 'bearer'
   expires_at: string
   user: User
+}
+
+export interface SiteNotification {
+  id: number
+  user_id: number
+  type: string
+  payload: Record<string, unknown>
+  read_at: string | null
+  created_at: string
 }

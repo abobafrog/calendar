@@ -1,8 +1,17 @@
-import { Suspense, lazy, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CalendarDays, Clock3, LockKeyhole, LogIn, SearchCheck, UserPlus, UsersRound } from 'lucide-react'
+import {
+  CalendarDays,
+  Clock3,
+  LockKeyhole,
+  LogIn,
+  SearchCheck,
+  UserPlus,
+  UsersRound,
+} from 'lucide-react'
 import { apiRequest } from '../api/client'
+import { ThemeBackground } from '../components/ThemeBackground'
 import type { AuthResponse } from '../lib/types'
 
 type AuthMode = 'login' | 'register'
@@ -29,10 +38,6 @@ type PreviewBlockStyle = CSSProperties & {
   '--tone': string
 }
 
-const ThemeBackground = lazy(() =>
-  import('../components/ThemeBackground').then((module) => ({ default: module.ThemeBackground })),
-)
-
 interface LoginPageProps {
   onAuthenticated: (auth: AuthResponse) => void
 }
@@ -40,12 +45,13 @@ interface LoginPageProps {
 export function LoginPage({ onAuthenticated }: LoginPageProps) {
   const navigate = useNavigate()
   const [mode, setMode] = useState<AuthMode>('login')
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [username, setUsername] = useState('')
-  const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
+  const [timezone, setTimezone] = useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+  )
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const title = mode === 'login' ? 'Войти в календарь' : 'Создать аккаунт'
@@ -54,7 +60,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     () =>
       mode === 'login'
         ? 'Продолжайте планировать общее время с друзьями.'
-        : 'Нужны только имя, email и пароль. Друзья увидят календарь после взаимной связи.',
+        : 'Нужны только имя, username и пароль. Друзья увидят календарь после взаимной связи.',
     [mode],
   )
 
@@ -65,19 +71,21 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     try {
       const payload =
         mode === 'login'
-          ? { email, password }
+          ? { username, password }
           : {
-              email,
               password,
               first_name: firstName,
               last_name: lastName || undefined,
-              username: username || undefined,
+              username,
               timezone,
             }
-      const auth = await apiRequest<AuthResponse>(mode === 'login' ? '/auth/login' : '/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      })
+      const auth = await apiRequest<AuthResponse>(
+        mode === 'login' ? '/auth/login' : '/auth/register',
+        {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        },
+      )
       onAuthenticated(auth)
       navigate('/', { replace: true })
     } catch (err) {
@@ -90,9 +98,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
   return (
     <main className="login-page">
       <div className="login-background" aria-hidden="true">
-        <Suspense fallback={null}>
-          <ThemeBackground />
-        </Suspense>
+        <ThemeBackground />
       </div>
       <section className="public-hero" aria-label="О проекте TimeTogether">
         <div className="login-hero__badge">
@@ -122,21 +128,30 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             <UsersRound size={20} />
           </span>
           <h2>Только принятые друзья</h2>
-          <p>Календарь и связи закрыты от посторонних. Доступ появляется только после взаимного принятия.</p>
+          <p>
+            Календарь и связи закрыты от посторонних. Доступ появляется только после взаимного
+            принятия.
+          </p>
         </article>
         <article>
           <span>
             <SearchCheck size={20} />
           </span>
           <h2>Поиск общего времени</h2>
-          <p>Выбираете участников, даты, часы и минимальную длительность, а система предлагает свободные интервалы.</p>
+          <p>
+            Выбираете участников, даты, часы и минимальную длительность, а система предлагает
+            свободные интервалы.
+          </p>
         </article>
         <article>
           <span>
             <LockKeyhole size={20} />
           </span>
           <h2>Приватность событий</h2>
-          <p>Для личной занятости можно показывать друзьям только статус «занят», без названия и деталей.</p>
+          <p>
+            Для личной занятости можно показывать друзьям только статус «занят», без названия и
+            деталей.
+          </p>
         </article>
       </section>
 
@@ -154,10 +169,22 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             ))}
           </div>
           <div className="preview-timeline">
-            <b style={{ '--top': '18%', '--height': '24%', '--tone': 'var(--accent)' } as PreviewBlockStyle}>
+            <b
+              style={
+                {
+                  '--top': '18%',
+                  '--height': '24%',
+                  '--tone': 'var(--accent)',
+                } as PreviewBlockStyle
+              }
+            >
               10:00
             </b>
-            <b style={{ '--top': '48%', '--height': '18%', '--tone': '#61d2c7' } as PreviewBlockStyle}>
+            <b
+              style={
+                { '--top': '48%', '--height': '18%', '--tone': '#61d2c7' } as PreviewBlockStyle
+              }
+            >
               14:00
             </b>
             <em>16:00 — 17:30 свободно для всех</em>
@@ -167,8 +194,8 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <Clock3 size={26} />
           <h2>Сначала отметьте занятость, затем приглашайте людей</h2>
           <p>
-            Для MVP доступны регистрация, друзья, личные интервалы, общий поиск времени,
-            предложения встреч и настройки профиля.
+            Для MVP доступны регистрация, друзья, личные интервалы, общий поиск времени, предложения
+            встреч и настройки профиля.
           </p>
         </div>
       </section>
@@ -176,10 +203,18 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       <section className="login-panel" aria-label={title}>
         <span className="auth-anchor">Авторизация</span>
         <div className="auth-tabs">
-          <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => setMode('login')}>
+          <button
+            className={mode === 'login' ? 'active' : ''}
+            type="button"
+            onClick={() => setMode('login')}
+          >
             Вход
           </button>
-          <button className={mode === 'register' ? 'active' : ''} type="button" onClick={() => setMode('register')}>
+          <button
+            className={mode === 'register' ? 'active' : ''}
+            type="button"
+            onClick={() => setMode('register')}
+          >
             Регистрация
           </button>
         </div>
@@ -210,15 +245,6 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
                 />
               </label>
               <label>
-                @username
-                <input
-                  autoCapitalize="none"
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  placeholder="frokla"
-                />
-              </label>
-              <label>
                 Часовой пояс
                 <select value={timezone} onChange={(event) => setTimezone(event.target.value)}>
                   {TIMEZONE_OPTIONS.map((zone) => (
@@ -231,15 +257,16 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             </>
           )}
           <label>
-            Email
+            Username
             <input
               autoCapitalize="none"
-              autoComplete="email"
-              inputMode="email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="username"
+              spellCheck={false}
+              placeholder="frokla"
+              value={username}
+              onChange={(event) => setUsername(event.target.value.replace(/^@/, ''))}
+              minLength={3}
+              pattern="[a-zA-Z0-9_.-]+"
               required
             />
           </label>
@@ -258,7 +285,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
 
           {mode === 'register' && (
             <p className="auth-hint">
-              Примеры: имя «Тимофей», username «tima_schedule», email «name@example.com».
+              Примеры: имя «Тимофей», фамилия «Иванов», username «tima_schedule».
             </p>
           )}
 

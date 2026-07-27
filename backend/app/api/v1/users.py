@@ -52,7 +52,11 @@ async def update_me(
         "notifications_enabled",
     }
     repository = UserRepository(session)
-    if payload.username is not None and await repository.is_username_taken(payload.username, exclude_user_id=current_user.id):
+    if "username" in payload.model_fields_set and payload.username is None:
+        raise AppError(422, "invalid_username", "Username cannot be empty")
+    if payload.username is not None and await repository.is_username_taken(
+        payload.username, exclude_user_id=current_user.id
+    ):
         raise AppError(409, "username_already_taken", "This username is already taken")
     for field_name in payload.model_fields_set & allowed_fields:
         value = getattr(payload, field_name)
