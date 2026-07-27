@@ -1,9 +1,11 @@
 import secrets
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.telegram_auth import TelegramUserData
+from app.models.enums import FriendshipStatus
+from app.models.friendship import Friendship
 from app.models.user import User
 
 
@@ -22,6 +24,40 @@ class UserRepository:
         normalized = username.removeprefix("@").lower()
         result = await self.session.scalars(select(User).where(func.lower(User.username) == normalized))
         return result.first()
+
+    async def search_by_username_prefix(self, query: str, *, exclude_user_id: int, limit: int = 6) -> list[User]:
+        normalized = query.removeprefix("@").strip().lower()
+        if not normalized:
+            return []
+        active_relationship = (
+            select(Friendship.id)
+            .where(
+                Friendship.status.in_(
+                    [
+                        FriendshipStatus.PENDING,
+                        FriendshipStatus.ACCEPTED,
+                        FriendshipStatus.BLOCKED,
+                    ]
+                ),
+                or_(
+                    (Friendship.requester_id == exclude_user_id) & (Friendship.addressee_id == User.id),
+                    (Friendship.requester_id == User.id) & (Friendship.addressee_id == exclude_user_id),
+                ),
+            )
+            .exists()
+        )
+        result = await self.session.scalars(
+            select(User)
+            .where(
+                User.id != exclude_user_id,
+                User.username.is_not(None),
+                func.lower(User.username).startswith(normalized),
+                ~active_relationship,
+            )
+            .order_by(func.length(User.username), func.lower(User.username))
+            .limit(limit)
+        )
+        return list(result)
 
     async def get_by_invite_code(self, invite_code: str) -> User | None:
         result = await self.session.scalars(select(User).where(User.invite_code == invite_code))

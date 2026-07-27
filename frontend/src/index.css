@@ -163,14 +163,14 @@ select:focus-visible {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 1;
+  opacity: 0.56;
 }
 .app-background .grainient-container,
 .login-background .grainient-container {
   width: 112%;
   height: 112%;
   margin: -6%;
-  filter: blur(22px) saturate(112%);
+  filter: blur(34px) saturate(92%);
   transform: scale(1.04);
 }
 .app-shell::before {
@@ -625,6 +625,12 @@ select:focus-visible {
 }
 .calendar-friends {
   margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(24px);
 }
 .section-heading {
   display: flex;
@@ -656,17 +662,18 @@ select:focus-visible {
   display: none;
 }
 .friend-chip {
-  min-width: 56px;
-  min-height: 70px;
-  padding: 4px 2px;
+  min-width: 76px;
+  min-height: 90px;
+  padding: 5px 3px;
   border: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   color: var(--muted);
   background: transparent;
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 650;
   cursor: pointer;
 }
 .friend-chip.is-active {
@@ -765,8 +772,8 @@ select:focus-visible {
 }
 
 .calendar-grid-wrap {
-  height: 690px;
-  min-height: 520px;
+  height: 540px;
+  min-height: 440px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--surface-solid) 44%, transparent);
@@ -1119,6 +1126,51 @@ select:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.search-hint {
+  margin: 0 4px 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.user-search-results {
+  margin: -12px 0 18px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+}
+.user-search-results:empty {
+  display: none;
+}
+.user-search-results .search-hint {
+  padding-block: 12px 2px;
+}
+.user-search-result {
+  min-height: 62px;
+}
+.search-add-button {
+  min-width: 42px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.search-add-button:disabled {
+  opacity: 0.55;
+}
+.search-add-button span {
+  color: inherit;
 }
 .search-panel svg {
   color: var(--muted);
@@ -1651,6 +1703,8 @@ select:focus-visible {
   background: var(--surface-solid);
   box-shadow: 0 -20px 60px rgba(25, 19, 44, 0.2);
   animation: sheet-in 0.24s ease both;
+  max-height: calc(100dvh - env(safe-area-inset-top) - 10px);
+  overflow-y: auto;
 }
 .modal-sheet__handle {
   display: block;
@@ -1683,6 +1737,12 @@ select:focus-visible {
   display: grid;
   gap: 13px;
   padding-top: 11px;
+}
+.sheet-form > .glass-button {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  box-shadow: 0 -8px 16px color-mix(in srgb, var(--surface-solid) 72%, transparent);
 }
 .sheet-form .segmented-control--wide {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1880,7 +1940,7 @@ select:focus-visible {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 1;
+  opacity: 0.56;
 }
 
 .login-page::before {
@@ -2307,7 +2367,7 @@ select:focus-visible {
     padding-inline: 28px;
   }
   .calendar-grid-wrap {
-    height: 720px;
+    height: 560px;
   }
   .busy-block {
     width: 58%;
@@ -2484,7 +2544,7 @@ select:focus-visible {
     display: none;
   }
   .calendar-grid-wrap {
-    height: min(58svh, 540px);
+    height: min(52svh, 500px);
     min-height: 420px;
   }
   .person-filter {
@@ -2500,20 +2560,24 @@ select:focus-visible {
     font-size: 10px;
   }
   .month-cell {
-    height: 66px;
-    padding: 4px 2px 3px;
+    height: 76px;
+    padding: 3px 2px 2px;
+    gap: 2px;
   }
   .month-cell strong {
-    min-width: 20px;
-    height: 20px;
+    min-width: 18px;
+    height: 18px;
     font-size: 11px;
+  }
+  .month-cell__events {
+    gap: 1px;
   }
   .month-cell__events i,
   .month-cell__events em {
-    height: 14px;
-    padding-inline: 4px;
-    font-size: 8px;
-    line-height: 13px;
+    height: 12px;
+    padding-inline: 3px;
+    font-size: 7px;
+    line-height: 11px;
   }
   .week-strip button {
     min-height: 50px;
@@ -2525,8 +2589,39 @@ select:focus-visible {
     font-size: 15px;
   }
   .friend-chip {
+    min-height: 86px;
+    font-size: 13px;
+  }
+  .person-row {
     min-height: 76px;
-    font-size: 12px;
+    align-items: flex-start;
+    padding-block: 9px;
+    flex-wrap: wrap;
+  }
+  .person-row > div:nth-child(2) {
+    min-height: 42px;
+    justify-content: center;
+  }
+  .person-row .row-actions {
+    width: 100%;
+    justify-content: flex-end;
+    padding-left: 53px;
+  }
+  .row-actions button {
+    width: 36px;
+    height: 36px;
+  }
+  .user-search-result {
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+  .user-search-result .search-add-button {
+    width: 40px;
+    min-width: 40px;
+    padding: 0;
+  }
+  .user-search-result .search-add-button span {
+    display: none;
   }
 }
 

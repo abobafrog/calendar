@@ -41,7 +41,9 @@ export function CalendarPage() {
     () =>
       shownIntervals
         .filter((interval) => new Date(interval.start_at).toDateString() === date.toDateString())
-        .sort((left, right) => new Date(left.start_at).getTime() - new Date(right.start_at).getTime()),
+        .sort(
+          (left, right) => new Date(left.start_at).getTime() - new Date(right.start_at).getTime(),
+        ),
     [date, shownIntervals],
   )
   const monday = useMemo(() => {
@@ -167,7 +169,13 @@ export function CalendarPage() {
               <div className="section-heading">
                 <div>
                   <span>День</span>
-                  <h2>{date.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
+                  <h2>
+                    {date.toLocaleDateString('ru-RU', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                    })}
+                  </h2>
                 </div>
                 <span className="selection-count">{dayIntervals.length || '0'}</span>
               </div>
@@ -195,7 +203,12 @@ export function CalendarPage() {
                               currentUserQuery.data.time_format ?? '24h',
                             )}
                           </strong>
-                          <span>{formatDateInZone(interval.start_at, currentUserQuery.data.timezone ?? 'UTC')}</span>
+                          <span>
+                            {formatDateInZone(
+                              interval.start_at,
+                              currentUserQuery.data.timezone ?? 'UTC',
+                            )}
+                          </span>
                         </div>
                         <div className="day-agenda__body">
                           <UserAvatar user={owner ?? currentUserQuery.data} size="sm" />
@@ -255,7 +268,7 @@ function PersonFilter({
             onClick={() => toggle(friend.id)}
           >
             <span style={{ '--chip-color': colorForUser(friend.id) } as React.CSSProperties} />
-            {friend.first_name}
+            {friend.alias || friend.first_name}
             {active && <Check size={14} />}
           </button>
         )

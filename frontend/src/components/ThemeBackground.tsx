@@ -15,13 +15,13 @@ const palettes: Record<ThemeMode, Palette> = {
     color3: '#e5f2ff',
   },
   dark: {
-    color1: '#210d2a',
-    color2: '#6841ff',
-    color3: '#23212e',
+    color1: '#160b20',
+    color2: '#432c9e',
+    color3: '#1b1a26',
   },
   contrast: {
     color1: '#000000',
-    color2: '#7455ff',
+    color2: '#5140b5',
     color3: '#101014',
   },
 }

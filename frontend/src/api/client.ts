@@ -1,7 +1,8 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
 export const AUTH_REQUIRED_EVENT = 'timetogether:auth-required'
 
-let accessToken: string | null = sessionStorage.getItem('access_token')
+let accessToken: string | null =
+  localStorage.getItem('access_token') ?? sessionStorage.getItem('access_token')
 
 export function hasAccessToken() {
   return Boolean(accessToken)
@@ -10,11 +11,13 @@ export function hasAccessToken() {
 export function setAccessToken(token: string) {
   accessToken = token
   sessionStorage.setItem('access_token', token)
+  localStorage.setItem('access_token', token)
 }
 
 export function clearAccessToken() {
   accessToken = null
   sessionStorage.removeItem('access_token')
+  localStorage.removeItem('access_token')
 }
 
 export class ApiError extends Error {

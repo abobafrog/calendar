@@ -27,13 +27,18 @@ export function useUpdateCurrentUser() {
 }
 
 export function useFriends() {
-  return useQuery({ queryKey: ['friends'], queryFn: () => apiRequest<Friend[]>('/friends') })
+  return useQuery({
+    queryKey: ['friends'],
+    queryFn: () => apiRequest<Friend[]>('/friends'),
+    refetchInterval: 10_000,
+  })
 }
 
 export function useIncomingFriendRequests() {
   return useQuery({
     queryKey: ['friend-requests', 'incoming'],
     queryFn: () => apiRequest<FriendRequest[]>('/friend-requests/incoming'),
+    refetchInterval: 10_000,
   })
 }
 
@@ -41,6 +46,16 @@ export function useOutgoingFriendRequests() {
   return useQuery({
     queryKey: ['friend-requests', 'outgoing'],
     queryFn: () => apiRequest<FriendRequest[]>('/friend-requests/outgoing'),
+    refetchInterval: 10_000,
+  })
+}
+
+export function useUserSearch(query: string) {
+  return useQuery({
+    enabled: query.length > 0,
+    queryKey: ['users', 'search', query],
+    queryFn: () => apiRequest<User[]>(`/users/search?query=${encodeURIComponent(query)}`),
+    staleTime: 30_000,
   })
 }
 
@@ -66,6 +81,16 @@ export function useFriendAction() {
     mutationFn: ({ userId, action }: { userId: number; action: 'remove' | 'block' }) =>
       apiRequest<void>(action === 'remove' ? `/friends/${userId}` : `/users/${userId}/block`, {
         method: action === 'remove' ? 'DELETE' : 'POST',
+      }),
+  })
+}
+
+export function useRenameFriend() {
+  return useMutation({
+    mutationFn: ({ userId, alias }: { userId: number; alias: string | null }) =>
+      apiRequest<Friend>(`/friends/${userId}/alias`, {
+        method: 'PATCH',
+        body: JSON.stringify({ alias }),
       }),
   })
 }

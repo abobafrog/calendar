@@ -8,13 +8,23 @@ from app.schemas.users import UserSummary
 
 
 class FriendRequestCreate(APIModel):
-    username: str | None = Field(default=None, min_length=1, max_length=32)
+    username: str | None = Field(default=None, min_length=3, max_length=64)
     invite_code: str | None = Field(default=None, min_length=8, max_length=32)
 
     @model_validator(mode="after")
     def exactly_one_identifier(self) -> "FriendRequestCreate":
         if bool(self.username) == bool(self.invite_code):
             raise ValueError("provide exactly one of username or invite_code")
+        return self
+
+
+class FriendAliasUpdate(APIModel):
+    alias: str | None = Field(default=None, max_length=128)
+
+    @model_validator(mode="after")
+    def normalize_alias(self) -> "FriendAliasUpdate":
+        if self.alias is not None:
+            self.alias = self.alias.strip() or None
         return self
 
 
@@ -31,3 +41,4 @@ class FriendshipResponse(APIModel):
 class FriendResponse(UserSummary):
     friendship_id: int
     friends_since: datetime
+    alias: str | None = None

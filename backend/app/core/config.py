@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379/0"
     allowed_origins: str = "http://localhost:5173"
     telegram_auth_max_age_seconds: int = Field(default=300, ge=30, le=3600)
-    jwt_ttl_seconds: int = Field(default=900, ge=60, le=86400)
+    jwt_ttl_seconds: int = Field(default=2_592_000, ge=60, le=31_536_000)
     log_level: str = "INFO"
     max_bulk_intervals: int = Field(default=100, ge=1, le=500)
     max_calendar_range_days: int = Field(default=93, ge=1, le=366)

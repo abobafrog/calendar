@@ -56,11 +56,11 @@ async def seed() -> None:
         if has_intervals is None:
             tomorrow = (datetime.now(UTC) + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
             samples = [
-                (users[0], 0, 90, "Планирование", IntervalVisibility.PRIVATE),
-                (users[0], 240, 300, "Обед", IntervalVisibility.FRIENDS),
-                (users[1], 60, 150, "Фокус", IntervalVisibility.HIDDEN),
-                (users[2], 180, 300, "Дизайн-ревью", IntervalVisibility.FRIENDS),
-                (users[3], 360, 450, None, IntervalVisibility.PRIVATE),
+                (users[0], 0, 90, "Планирование", IntervalVisibility.OPEN),
+                (users[0], 240, 300, "Обед", IntervalVisibility.OPEN),
+                (users[1], 60, 150, "Фокус", IntervalVisibility.CLOSED),
+                (users[2], 180, 300, "Дизайн-ревью", IntervalVisibility.OPEN),
+                (users[3], 360, 450, None, IntervalVisibility.OPEN),
             ]
             for user, offset, duration, title, visibility in samples:
                 session.add(

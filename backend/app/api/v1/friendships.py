@@ -1,11 +1,14 @@
 from app.api.deps import get_redis
+from app.core.errors import AppError
 from app.core.rate_limit import RateLimit, enforce_rate_limit
 from app.core.security import get_current_user
 from app.db.session import get_session
 from app.models.friendship import Friendship
 from app.models.user import User
 from app.repositories.friendships import FriendshipRepository
+from app.repositories.users import UserRepository
 from app.schemas.friendships import (
+    FriendAliasUpdate,
     FriendRequestCreate,
     FriendResponse,
     FriendshipResponse,
@@ -35,6 +38,7 @@ async def list_friends(
             **UserSummary.model_validate(user).model_dump(),
             friendship_id=relation.id,
             friends_since=relation.updated_at,
+            alias=(relation.requester_alias if relation.requester_id == current_user.id else relation.addressee_alias),
         )
         for relation, user in pairs
     ]
@@ -101,6 +105,25 @@ async def remove_friend(
 ) -> Response:
     await FriendshipService(session).remove_friend(current_user, user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.patch("/friends/{user_id}/alias", response_model=FriendResponse)
+async def rename_friend(
+    user_id: int,
+    payload: FriendAliasUpdate,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> FriendResponse:
+    relation = await FriendshipService(session).set_alias(current_user, user_id, payload.alias)
+    friend = await UserRepository(session).get_by_id(user_id)
+    if friend is None:
+        raise AppError(404, "friendship_not_found", "Friendship not found")
+    return FriendResponse(
+        **UserSummary.model_validate(friend).model_dump(),
+        friendship_id=relation.id,
+        friends_since=relation.updated_at,
+        alias=(relation.requester_alias if relation.requester_id == current_user.id else relation.addressee_alias),
+    )
 
 
 @router.post("/users/{user_id}/block", response_model=FriendshipResponse)

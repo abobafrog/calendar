@@ -13,7 +13,7 @@ class CalendarRange(DateRangeMixin):
 
 class BusyIntervalCreate(DateRangeMixin):
     title: str | None = Field(default=None, max_length=200)
-    visibility: IntervalVisibility = IntervalVisibility.PRIVATE
+    visibility: IntervalVisibility = IntervalVisibility.OPEN
 
     @model_validator(mode="after")
     def valid_range(self) -> "BusyIntervalCreate":

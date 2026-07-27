@@ -15,7 +15,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/lookup", response_model=UserSummary)
 async def lookup_user(
-    username: str = Query(min_length=1, max_length=32),
+    username: str = Query(min_length=3, max_length=64),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
@@ -26,6 +26,18 @@ async def lookup_user(
     if user is None or user.id == current_user.id:
         raise AppError(404, "user_not_found", "No user matches that exact username")
     return UserSummary.model_validate(user)
+
+
+@router.get("/search", response_model=list[UserSummary])
+async def search_users(
+    query: str = Query(min_length=1, max_length=64),
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
+) -> list[UserSummary]:
+    await enforce_rate_limit(redis, f"rate:user-search:{current_user.id}", RateLimit(120, 3600))
+    users = await UserRepository(session).search_by_username_prefix(query, exclude_user_id=current_user.id)
+    return [UserSummary.model_validate(user) for user in users]
 
 
 @router.get("/me", response_model=UserResponse)

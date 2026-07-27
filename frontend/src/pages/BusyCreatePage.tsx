@@ -1,13 +1,4 @@
-import {
-  ArrowLeft,
-  CalendarPlus,
-  Check,
-  Eye,
-  EyeOff,
-  LockKeyhole,
-  Plus,
-  Trash2,
-} from 'lucide-react'
+import { ArrowLeft, CalendarPlus, Check, Eye, LockKeyhole, Plus, Trash2 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -36,7 +27,7 @@ export function BusyCreatePage() {
   const [date, setDate] = useState(today)
   const [blocks, setBlocks] = useState<TimeBlock[]>([{ start: '10:00', end: '11:00' }])
   const [days, setDays] = useState<number[]>([fromLocalDateKey(today).getDay() || 7])
-  const [visibility, setVisibility] = useState<Visibility>('private')
+  const [visibility, setVisibility] = useState<Visibility>('open')
   const [toast, setToast] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const selectedDate = fromLocalDateKey(date)
@@ -243,35 +234,24 @@ export function BusyCreatePage() {
         <div className="visibility-options">
           <button
             type="button"
-            className={visibility === 'private' ? 'is-active' : ''}
-            onClick={() => setVisibility('private')}
-          >
-            <LockKeyhole size={19} />
-            <span>
-              <strong>Приватно</strong>
-              <small>Друзья видят «занят»</small>
-            </span>
-          </button>
-          <button
-            type="button"
-            className={visibility === 'friends' ? 'is-active' : ''}
-            onClick={() => setVisibility('friends')}
+            className={visibility === 'open' ? 'is-active' : ''}
+            onClick={() => setVisibility('open')}
           >
             <Eye size={19} />
             <span>
-              <strong>Для друзей</strong>
-              <small>Название видно друзьям</small>
+              <strong>Открыто</strong>
+              <small>Друзья видят только «занят»</small>
             </span>
           </button>
           <button
             type="button"
-            className={visibility === 'hidden' ? 'is-active' : ''}
-            onClick={() => setVisibility('hidden')}
+            className={visibility === 'closed' ? 'is-active' : ''}
+            onClick={() => setVisibility('closed')}
           >
-            <EyeOff size={19} />
+            <LockKeyhole size={19} />
             <span>
-              <strong>Скрыто</strong>
-              <small>Только расчёт времени</small>
+              <strong>Закрыто</strong>
+              <small>Видно только вам</small>
             </span>
           </button>
         </div>

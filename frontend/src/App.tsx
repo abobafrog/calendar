@@ -5,6 +5,7 @@ import { AppShell } from './components/AppShell'
 import { ThemeBackground } from './components/ThemeBackground'
 import {
   AUTH_REQUIRED_EVENT,
+  ApiError,
   apiRequest,
   clearAccessToken,
   hasAccessToken,
@@ -28,30 +29,44 @@ export default function App() {
   const [session, setSession] = useState<'checking' | 'authenticated' | 'anonymous'>(() =>
     hasAccessToken() ? 'checking' : 'anonymous',
   )
+  const [sessionMessage, setSessionMessage] = useState('Проверяем сессию…')
 
   useEffect(() => {
     let active = true
+    let retryTimer: number | undefined
     const requireAuthentication = () => {
       clearAccessToken()
       queryClient.clear()
       if (active) setSession('anonymous')
     }
-
-    window.addEventListener(AUTH_REQUIRED_EVENT, requireAuthentication)
-    if (hasAccessToken()) {
+    const verifySession = () => {
       void apiRequest<User>('/users/me')
         .then((user) => {
           if (!active) return
           queryClient.setQueryData(['me'], user)
+          resetMobileViewport()
+          setSessionMessage('Проверяем сессию…')
           setSession('authenticated')
         })
-        .catch(() => {
-          if (active) requireAuthentication()
+        .catch((error: unknown) => {
+          if (!active) return
+          if (error instanceof ApiError && error.status === 401) {
+            requireAuthentication()
+            return
+          }
+          setSessionMessage('Сервер временно недоступен. Повторяем подключение…')
+          retryTimer = window.setTimeout(verifySession, 3_000)
         })
+    }
+
+    window.addEventListener(AUTH_REQUIRED_EVENT, requireAuthentication)
+    if (hasAccessToken()) {
+      verifySession()
     }
 
     return () => {
       active = false
+      window.clearTimeout(retryTimer)
       window.removeEventListener(AUTH_REQUIRED_EVENT, requireAuthentication)
     }
   }, [queryClient])
@@ -69,7 +84,7 @@ export default function App() {
         <div className="app-background" aria-hidden="true">
           <ThemeBackground />
         </div>
-        <p>Проверяем сессию…</p>
+        <p>{sessionMessage}</p>
       </div>
     )
   }

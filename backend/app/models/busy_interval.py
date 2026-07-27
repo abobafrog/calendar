@@ -32,8 +32,8 @@ class BusyInterval(TimestampMixin, Base):
             name="interval_visibility",
             values_callable=lambda e: [x.value for x in e],
         ),
-        default=IntervalVisibility.PRIVATE,
-        server_default=IntervalVisibility.PRIVATE.value,
+        default=IntervalVisibility.OPEN,
+        server_default=IntervalVisibility.OPEN.value,
     )
 
     user: Mapped["User"] = relationship(back_populates="busy_intervals")

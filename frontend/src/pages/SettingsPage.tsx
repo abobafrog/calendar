@@ -161,22 +161,11 @@ export function SettingsPage() {
             />
             <i />
           </label>
-          <button
-            type="button"
-            onClick={() => setToast('В MVP видимость выбирается при создании каждого интервала.')}
-          >
-            <ShieldCheck size={19} />
-            <span>
-              <strong>Видимость по умолчанию</strong>
-              <small>Приватно</small>
-            </span>
-            <ChevronRight size={18} />
-          </button>
         </GlassPanel>
       </section>
       <p className="settings-note">
-        Доступ к календарю есть только у принятых друзей. Скрытые интервалы используются лишь для
-        расчёта свободного времени.
+        Доступ к календарю есть только у принятых друзей. Открытый интервал показывается им как
+        «занят», закрытый доступен только вам.
       </p>
       <SettingsSheet
         key={`${sheet ?? 'closed'}-${currentUser.first_name}-${currentUser.last_name ?? ''}-${currentUser.username ?? ''}-${currentUser.photo_url ?? ''}-${currentUser.timezone}`}

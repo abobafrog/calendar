@@ -1,5 +1,5 @@
 export type ThemeMode = 'light' | 'dark' | 'contrast'
-export type Visibility = 'private' | 'friends' | 'hidden'
+export type Visibility = 'open' | 'closed'
 export type MeetingStatus = 'pending' | 'confirmed' | 'cancelled'
 export type ResponseStatus = 'pending' | 'accepted' | 'declined'
 
@@ -32,6 +32,7 @@ export interface BusyInterval {
 export interface Friend extends User {
   friendship_id: number
   friends_since: string
+  alias?: string | null
 }
 
 export interface FriendRequest {

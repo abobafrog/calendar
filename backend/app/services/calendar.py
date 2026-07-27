@@ -20,21 +20,22 @@ class CalendarService:
 
     async def create(self, actor: User, data: BusyIntervalCreate) -> BusyInterval:
         await self.session.execute(select(User.id).where(User.id == actor.id).with_for_update())
-        touching = await self.repository.list_touching(actor.id, data.start_at, data.end_at)
+        touching = [
+            item
+            for item in await self.repository.list_touching(actor.id, data.start_at, data.end_at)
+            if item.visibility == data.visibility
+        ]
         start_at = min([data.start_at, *(item.start_at for item in touching)])
         end_at = max([data.end_at, *(item.end_at for item in touching)])
         titles = {item.title for item in touching if item.title}
         title = data.title if not titles or titles == {data.title} else data.title or "Busy"
-        visibility = data.visibility
-        if touching and any(item.visibility != data.visibility for item in touching):
-            visibility = IntervalVisibility.PRIVATE
         await self.repository.delete_many([item.id for item in touching])
         interval = BusyInterval(
             user_id=actor.id,
             start_at=start_at,
             end_at=end_at,
             title=title,
-            visibility=visibility,
+            visibility=data.visibility,
         )
         self.session.add(interval)
         await self.session.flush()
@@ -65,7 +66,11 @@ class CalendarService:
             current.title = data.title
         if data.visibility is not None:
             current.visibility = data.visibility
-        touching = await self.repository.list_touching(actor.id, start_at, end_at, exclude_id=current.id)
+        touching = [
+            item
+            for item in await self.repository.list_touching(actor.id, start_at, end_at, exclude_id=current.id)
+            if item.visibility == current.visibility
+        ]
         if touching:
             current.start_at = min([start_at, *(item.start_at for item in touching)])
             current.end_at = max([end_at, *(item.end_at for item in touching)])
@@ -91,10 +96,10 @@ class CalendarService:
         is_owner = actor.id == owner_id
         visible: list[FriendBusyInterval] = []
         for item in intervals:
-            if not is_owner and item.visibility == IntervalVisibility.HIDDEN:
+            if not is_owner and item.visibility == IntervalVisibility.CLOSED:
                 continue
-            title = item.title if is_owner or item.visibility == IntervalVisibility.FRIENDS else None
-            response_visibility = item.visibility if is_owner else IntervalVisibility.FRIENDS
+            title = item.title if is_owner else None
+            response_visibility = item.visibility
             visible.append(
                 FriendBusyInterval(
                     id=item.id,

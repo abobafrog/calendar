@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.errors import AppError
+from app.models.enums import IntervalVisibility
 from app.models.user import User
 from app.repositories.calendar import CalendarRepository
 from app.repositories.friendships import FriendshipRepository
@@ -148,9 +149,10 @@ class AvailabilityService:
         if not windows:
             return AvailabilitySearchResponse(timezone=data.timezone, participants=participant_ids, slots=[])
         busy = await self.calendar.list_range(participant_ids, windows[0].start_at, windows[-1].end_at)
+        visible_busy = [item for item in busy if item.user_id == actor.id or item.visibility == IntervalVisibility.OPEN]
         slots = find_common_free_slots(
             windows,
-            [TimeSpan(item.start_at, item.end_at) for item in busy],
+            [TimeSpan(item.start_at, item.end_at) for item in visible_busy],
             timedelta(minutes=data.minimum_duration_minutes),
         )
         return AvailabilitySearchResponse(

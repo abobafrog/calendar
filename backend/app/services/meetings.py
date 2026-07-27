@@ -118,7 +118,7 @@ class MeetingService:
                     start_at=meeting.start_at,
                     end_at=meeting.end_at,
                     title=meeting.title,
-                    visibility=IntervalVisibility.FRIENDS,
+                    visibility=IntervalVisibility.OPEN,
                 )
             )
             await self.notifications.create(user_id, "meeting_confirmed", {"meeting_id": meeting.id})

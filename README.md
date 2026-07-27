@@ -1,6 +1,6 @@
 # TimeTogether
 
-TimeTogether is a web MVP for private collaborative scheduling. Users sign up with email/password, add busy intervals, connect with friends, find common free slots and propose meetings.
+TimeTogether is a web MVP for private collaborative scheduling. Users sign up with a username/password, add busy intervals, connect with friends, find common free slots and propose meetings.
 
 ## Local Run
 
@@ -95,7 +95,7 @@ docker compose exec backend python -m app.db.seed
 ## Privacy Rules
 
 - A user sees full details of their own intervals.
-- Friends see availability only after an accepted friendship.
+- Friends see only open busy intervals after an accepted friendship; closed intervals are visible only to their owner.
 - Private friend intervals expose only busy status.
 - Hidden intervals are used for availability calculations but not shown as details.
 - Calendar and meeting endpoints run backend permission checks; frontend state is not trusted.

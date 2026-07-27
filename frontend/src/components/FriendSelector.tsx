@@ -26,14 +26,14 @@ export function FriendSelector({
             aria-pressed={active}
           >
             <span className="friend-chip__avatar">
-              <UserAvatar user={friend} size="sm" />
+              <UserAvatar user={friend} size="md" />
               {active && (
                 <i>
                   <Check size={11} strokeWidth={3} />
                 </i>
               )}
             </span>
-            <span>{friend.first_name}</span>
+            <span>{friend.alias || friend.first_name}</span>
           </button>
         )
       })}

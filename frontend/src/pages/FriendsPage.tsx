@@ -1,4 +1,4 @@
-import { Check, Copy, Search, ShieldBan, UserMinus, X } from 'lucide-react'
+import { Check, Copy, Pencil, Search, ShieldBan, UserMinus, UserPlus, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -14,11 +14,14 @@ import {
   useFriends,
   useIncomingFriendRequests,
   useOutgoingFriendRequests,
+  useRenameFriend,
+  useUserSearch,
 } from '../api/hooks'
 
 export function FriendsPage() {
   const [tab, setTab] = useState<'friends' | 'incoming' | 'outgoing'>('friends')
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [toast, setToast] = useState<string | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
@@ -29,11 +32,14 @@ export function FriendsPage() {
   const createRequest = useCreateFriendRequest()
   const requestResponse = useFriendRequestResponse()
   const friendAction = useFriendAction()
+  const renameFriend = useRenameFriend()
+  const userSearch = useUserSearch(debouncedQuery)
   const visibleFriends = friendsQuery.data ?? []
   const incomingRequests = incomingQuery.data ?? []
   const outgoingRequests = outgoingQuery.data ?? []
   const inviteCode = currentUserQuery.data?.invite_code ?? ''
   const inviteLink = `${window.location.origin}/friends?invite=${inviteCode}`
+  const normalizedQuery = query.trim().replace(/^@/, '').toLowerCase()
   const showError = useCallback(
     (error: unknown) => setToast(error instanceof Error ? error.message : 'Операция не выполнена'),
     [],
@@ -58,6 +64,11 @@ export function FriendsPage() {
         setSearchParams({})
       })
   }, [createRequest, invalidateSocialData, searchParams, setSearchParams, showError])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(normalizedQuery), 350)
+    return () => window.clearTimeout(timer)
+  }, [normalizedQuery])
   return (
     <div className="page">
       <header className="page-header">
@@ -108,24 +119,49 @@ export function FriendsPage() {
             />
             <GlassButton
               variant="primary"
-              onClick={async () => {
-                if (!query.trim()) {
-                  setToast('Введите точный username')
-                  return
-                }
-                try {
-                  await createRequest.mutateAsync({ username: query.trim().replace(/^@/, '') })
-                  setQuery('')
-                  setToast('Приглашение отправлено')
-                  await invalidateSocialData()
-                } catch (error) {
-                  showError(error)
-                }
-              }}
+              disabled={!normalizedQuery}
+              onClick={() => setDebouncedQuery(normalizedQuery)}
             >
               Найти
             </GlassButton>
           </GlassPanel>
+          {normalizedQuery && (
+            <div className="user-search-results" aria-live="polite">
+              {userSearch.isFetching && <p className="search-hint">Ищем пользователей…</p>}
+              {!userSearch.isFetching && debouncedQuery && userSearch.data?.length === 0 && (
+                <p className="search-hint">Совпадений не найдено.</p>
+              )}
+              {userSearch.data?.map((user) => (
+                <article key={user.id} className="person-row user-search-result">
+                  <UserAvatar user={user} />
+                  <div>
+                    <strong>{`${user.first_name} ${user.last_name ?? ''}`.trim()}</strong>
+                    <span>@{user.username}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="search-add-button"
+                    aria-label={`Добавить @${user.username}`}
+                    disabled={createRequest.isPending}
+                    onClick={async () => {
+                      try {
+                        await createRequest.mutateAsync({ username: user.username ?? undefined })
+                        setQuery('')
+                        setDebouncedQuery('')
+                        setToast('Приглашение отправлено')
+                        await invalidateSocialData()
+                      } catch (error) {
+                        showError(error)
+                      }
+                    }}
+                  >
+                    <UserPlus size={18} />
+                    <span>Добавить</span>
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
           <section className="list-section">
             <h2>Мои друзья</h2>
             <div className="people-list">
@@ -134,11 +170,34 @@ export function FriendsPage() {
                   <UserAvatar user={friend} status />
                   <div>
                     <strong>
-                      {friend.first_name} {friend.last_name}
+                      {friend.alias || `${friend.first_name} ${friend.last_name ?? ''}`.trim()}
                     </strong>
                     <span>@{friend.username}</span>
                   </div>
                   <div className="row-actions">
+                    <button
+                      type="button"
+                      aria-label="Переименовать друга"
+                      onClick={async () => {
+                        const next = window.prompt(
+                          'Имя друга только для вас',
+                          friend.alias ?? friend.first_name,
+                        )
+                        if (next === null) return
+                        try {
+                          await renameFriend.mutateAsync({
+                            userId: friend.id,
+                            alias: next.trim() || null,
+                          })
+                          setToast('Имя сохранено только у вас')
+                          await invalidateSocialData()
+                        } catch (error) {
+                          showError(error)
+                        }
+                      }}
+                    >
+                      <Pencil size={17} />
+                    </button>
                     <button
                       type="button"
                       aria-label="Удалить из друзей"
@@ -247,8 +306,12 @@ export function FriendsPage() {
           <div>
             <Search size={26} />
           </div>
-          <h2>{outgoingRequests.length ? `Ожидающих запросов: ${outgoingRequests.length}` : 'Нет ожидающих запросов'}</h2>
-          <p>Для приватности поиск работает только по точному username или ссылке.</p>
+          <h2>
+            {outgoingRequests.length
+              ? `Ожидающих запросов: ${outgoingRequests.length}`
+              : 'Нет ожидающих запросов'}
+          </h2>
+          <p>Поиск показывает до шести совпадений по username.</p>
         </div>
       )}
       <Toast message={toast} onClose={() => setToast(null)} />

@@ -64,7 +64,7 @@ export const intervals: BusyInterval[] = [
     start_at: at(0, 9),
     end_at: at(0, 10, 30),
     title: 'Планирование',
-    visibility: 'private',
+    visibility: 'open',
   },
   {
     id: 2,
@@ -72,7 +72,7 @@ export const intervals: BusyInterval[] = [
     start_at: at(0, 12),
     end_at: at(0, 13),
     title: 'Обед',
-    visibility: 'friends',
+    visibility: 'open',
   },
   {
     id: 3,
@@ -80,7 +80,7 @@ export const intervals: BusyInterval[] = [
     start_at: at(0, 15),
     end_at: at(0, 16, 30),
     title: 'Работа над проектом',
-    visibility: 'private',
+    visibility: 'open',
   },
   {
     id: 4,
@@ -88,7 +88,7 @@ export const intervals: BusyInterval[] = [
     start_at: at(0, 10),
     end_at: at(0, 12),
     title: 'Занят',
-    visibility: 'private',
+    visibility: 'open',
   },
   {
     id: 5,
@@ -96,16 +96,16 @@ export const intervals: BusyInterval[] = [
     start_at: at(0, 13),
     end_at: at(0, 14, 30),
     title: 'Дизайн-ревью',
-    visibility: 'friends',
+    visibility: 'open',
   },
-  { id: 6, user_id: 4, start_at: at(0, 16), end_at: at(0, 18), title: null, visibility: 'private' },
+  { id: 6, user_id: 4, start_at: at(0, 16), end_at: at(0, 18), title: null, visibility: 'open' },
   {
     id: 7,
     user_id: 2,
     start_at: at(1, 11),
     end_at: at(1, 12, 30),
     title: 'Занят',
-    visibility: 'private',
+    visibility: 'open',
   },
 ]
 

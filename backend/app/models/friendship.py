@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, CheckConstraint, Enum, ForeignKey, Index
+from sqlalchemy import BigInteger, CheckConstraint, Enum, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -31,6 +31,8 @@ class Friendship(TimestampMixin, Base):
         server_default=FriendshipStatus.PENDING.value,
     )
     blocked_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    requester_alias: Mapped[str | None] = mapped_column(String(128))
+    addressee_alias: Mapped[str | None] = mapped_column(String(128))
 
     requester: Mapped["User"] = relationship(foreign_keys=[requester_id], back_populates="requested_friendships")
     addressee: Mapped["User"] = relationship(foreign_keys=[addressee_id], back_populates="received_friendships")

@@ -9,9 +9,8 @@ class FriendshipStatus(StrEnum):
 
 
 class IntervalVisibility(StrEnum):
-    PRIVATE = "private"
-    FRIENDS = "friends"
-    HIDDEN = "hidden"
+    OPEN = "open"
+    CLOSED = "closed"
 
 
 class MeetingStatus(StrEnum):

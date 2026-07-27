@@ -100,3 +100,17 @@ class FriendshipService:
             relation.blocked_by_id = actor.id
         await self.session.commit()
         return relation
+
+    async def set_alias(self, actor: User, target_id: int, alias: str | None) -> Friendship:
+        if actor.id == target_id:
+            raise AppError(422, "self_friendship", "You cannot rename yourself here")
+        relation = await self.repository.get_pair(actor.id, target_id, for_update=True)
+        if relation is None or relation.status != FriendshipStatus.ACCEPTED:
+            raise AppError(404, "friendship_not_found", "Accepted friendship not found")
+        if relation.requester_id == actor.id:
+            relation.requester_alias = alias
+        else:
+            relation.addressee_alias = alias
+        await self.session.commit()
+        await self.session.refresh(relation)
+        return relation
