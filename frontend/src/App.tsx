@@ -16,6 +16,7 @@ import { resetMobileViewport } from './lib/viewport'
 import type { AuthResponse, User } from './lib/types'
 import { AvailabilityPage } from './pages/AvailabilityPage'
 import { BusyCreatePage } from './pages/BusyCreatePage'
+import { BusyEditPage } from './pages/BusyEditPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { FriendsPage } from './pages/FriendsPage'
 import { LoginPage } from './pages/LoginPage'
@@ -89,6 +90,10 @@ export default function App() {
     )
   }
 
+  const inviteTarget = new URLSearchParams(window.location.search).has('invite')
+    ? `/friends${window.location.search}`
+    : '/'
+
   return (
     <BrowserRouter>
       <Routes>
@@ -96,17 +101,24 @@ export default function App() {
           path="login"
           element={
             session === 'authenticated' ? (
-              <Navigate to="/" replace />
+              <Navigate to={inviteTarget} replace />
             ) : (
               <LoginPage onAuthenticated={handleAuthenticated} />
             )
           }
         />
         <Route
-          element={session === 'authenticated' ? <AppShell /> : <Navigate to="/login" replace />}
+          element={
+            session === 'authenticated' ? (
+              <AppShell />
+            ) : (
+              <Navigate to={`/login${window.location.search}`} replace />
+            )
+          }
         >
           <Route index element={<CalendarPage />} />
           <Route path="busy/new" element={<BusyCreatePage />} />
+          <Route path="busy/:id/edit" element={<BusyEditPage />} />
           <Route path="availability" element={<AvailabilityPage />} />
           <Route path="friends" element={<FriendsPage />} />
           <Route path="meetings" element={<MeetingsPage />} />

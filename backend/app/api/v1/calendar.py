@@ -54,6 +54,16 @@ async def create_interval(
     return BusyIntervalResponse.model_validate(interval)
 
 
+@router.get("/intervals/{interval_id}", response_model=BusyIntervalResponse)
+async def get_interval(
+    interval_id: int,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> BusyIntervalResponse:
+    interval = await CalendarService(session).get(current_user, interval_id)
+    return BusyIntervalResponse.model_validate(interval)
+
+
 @router.post(
     "/intervals/bulk",
     response_model=list[BusyIntervalResponse],

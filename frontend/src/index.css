@@ -603,6 +603,7 @@ select:focus-visible {
   gap: 3px;
 }
 .month-cell__events i,
+.month-cell__events button,
 .month-cell__events em {
   min-width: 0;
   height: 18px;
@@ -895,6 +896,16 @@ select:focus-visible {
   background: color-mix(in srgb, var(--block-color) 18%, var(--surface-solid));
   box-shadow: 0 5px 14px color-mix(in srgb, var(--block-color) 14%, transparent);
   overflow: hidden;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.busy-block:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .busy-block:nth-of-type(even) {
   left: 20%;
@@ -1660,6 +1671,11 @@ select:focus-visible {
 .day-agenda__item {
   display: grid;
   gap: 10px;
+  cursor: pointer;
+}
+.day-agenda__item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .day-agenda__time strong,
 .day-agenda__empty strong,
@@ -1758,6 +1774,219 @@ select:focus-visible {
   color: var(--accent);
   background: var(--accent-soft);
   font-size: 12px;
+}
+.interval-summary {
+  display: grid;
+  gap: 16px;
+  padding: 12px 0 2px;
+}
+.interval-summary__owner {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.interval-summary__owner strong,
+.interval-summary__owner span {
+  display: block;
+}
+.interval-summary__owner strong {
+  font-size: 14px;
+}
+.interval-summary__owner span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.interval-summary dl {
+  margin: 0;
+  display: grid;
+  gap: 9px;
+}
+.interval-summary dl > div {
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+.interval-summary dt {
+  color: var(--muted);
+  font-size: 10px;
+}
+.interval-summary dd {
+  margin: 3px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+.interval-summary > .glass-button {
+  width: 100%;
+}
+.quick-time-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.quick-time-actions .glass-button {
+  min-height: 48px;
+}
+.delete-interval-button {
+  width: 100%;
+  margin-top: 10px;
+}
+.edit-note {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.payment-sheet {
+  display: grid;
+  gap: 14px;
+  padding: 10px 0 2px;
+}
+.payment-price {
+  min-height: 64px;
+  padding: 12px 14px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--accent-soft);
+}
+.payment-price span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.payment-price strong {
+  color: var(--text);
+  font-size: 21px;
+}
+.payment-methods {
+  display: grid;
+  gap: 8px;
+}
+.payment-methods > button {
+  width: 100%;
+  min-height: 62px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--muted);
+  text-align: left;
+  background: var(--surface-muted);
+  cursor: pointer;
+}
+.payment-methods > button.is-active {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  background: var(--accent-soft);
+}
+.payment-method__icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  background: var(--surface-solid);
+}
+.payment-method__text {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+.payment-method__text strong {
+  color: var(--text);
+  font-size: 13px;
+}
+.payment-method__text small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.payment-methods i {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--surface-solid);
+}
+.payment-methods .is-active i {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.payment-security {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.payment-security svg {
+  color: var(--green);
+  flex: 0 0 auto;
+}
+.payment-submit {
+  width: 100%;
+  min-height: 52px;
+}
+.payment-error {
+  margin: 0;
+  color: var(--red);
+  font-size: 11px;
+  text-align: center;
+}
+.payment-progress {
+  min-height: 260px;
+  padding: 38px 18px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.payment-progress__mark {
+  width: 68px;
+  height: 68px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--accent-soft);
+}
+.payment-progress__mark > span {
+  width: 28px;
+  height: 28px;
+  border: 3px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: payment-spin 0.85s linear infinite;
+}
+.payment-progress--success .payment-progress__mark {
+  background: var(--green);
+  animation: payment-confirm 0.35s ease both;
+}
+.payment-progress h3 {
+  max-width: 320px;
+  font-size: 19px;
+}
+.payment-progress p {
+  max-width: 330px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+@keyframes payment-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes payment-confirm {
+  from { transform: scale(0.75); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 .toast {
   position: fixed;
@@ -2573,6 +2802,7 @@ select:focus-visible {
     gap: 1px;
   }
   .month-cell__events i,
+  .month-cell__events button,
   .month-cell__events em {
     height: 12px;
     padding-inline: 3px;
@@ -2623,6 +2853,11 @@ select:focus-visible {
   .user-search-result .search-add-button span {
     display: none;
   }
+}
+.month-cell__events button {
+  border: 0;
+  text-align: left;
+  cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -6,7 +6,7 @@ import { apiRequest } from '../api/client'
 import { DateSwitcher } from '../components/DateSwitcher'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
-import { Toast } from '../components/Toast'
+import { PaymentSheet } from '../components/PaymentSheet'
 import { formatLocalDateKey, fromLocalDateKey, toLocalDateKey } from '../lib/time'
 import type { Visibility } from '../lib/types'
 
@@ -28,8 +28,8 @@ export function BusyCreatePage() {
   const [blocks, setBlocks] = useState<TimeBlock[]>([{ start: '10:00', end: '11:00' }])
   const [days, setDays] = useState<number[]>([fromLocalDateKey(today).getDay() || 7])
   const [visibility, setVisibility] = useState<Visibility>('open')
-  const [toast, setToast] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [paymentOpen, setPaymentOpen] = useState(false)
   const selectedDate = fromLocalDateKey(date)
   const weekStart = startOfWeek(selectedDate)
   const weekDates = Array.from({ length: 7 }, (_, index) => {
@@ -65,10 +65,9 @@ export function BusyCreatePage() {
         body: JSON.stringify({ intervals }),
       })
       await queryClient.invalidateQueries({ queryKey: ['calendar'], refetchType: 'all' })
-      setToast('Занятость сохранена')
-      window.setTimeout(() => navigate('/', { replace: true }), 350)
     } catch (error) {
-      setToast(error instanceof Error ? error.message : 'Не удалось сохранить занятость')
+      throw error instanceof Error ? error : new Error('Не удалось сохранить занятость')
+    } finally {
       setSaving(false)
     }
   }
@@ -82,9 +81,9 @@ export function BusyCreatePage() {
         <h1>Новая занятость</h1>
         <GlassButton
           variant="icon"
-          onClick={() => void save()}
+          onClick={() => setPaymentOpen(true)}
           disabled={!canSave || saving}
-          aria-label="Сохранить интервалы"
+          aria-label="Перейти к оплате"
         >
           <Check size={19} />
         </GlassButton>
@@ -229,7 +228,7 @@ export function BusyCreatePage() {
       </GlassPanel>
       <GlassPanel className="form-section">
         <div className="form-label">
-          <span>Видимость</span>
+          <span>Показывать друзьям</span>
         </div>
         <div className="visibility-options">
           <button
@@ -239,8 +238,8 @@ export function BusyCreatePage() {
           >
             <Eye size={19} />
             <span>
-              <strong>Открыто</strong>
-              <small>Друзья видят только «занят»</small>
+              <strong>Да, показать дело</strong>
+              <small>Друзья увидят название и время</small>
             </span>
           </button>
           <button
@@ -250,8 +249,8 @@ export function BusyCreatePage() {
           >
             <LockKeyhole size={19} />
             <span>
-              <strong>Закрыто</strong>
-              <small>Видно только вам</small>
+              <strong>Нет, скрыть детали</strong>
+              <small>Друзья увидят только «Занят»</small>
             </span>
           </button>
         </div>
@@ -259,12 +258,17 @@ export function BusyCreatePage() {
       <GlassButton
         variant="primary"
         className="sticky-submit"
-        onClick={() => void save()}
+        onClick={() => setPaymentOpen(true)}
         disabled={!canSave || saving}
       >
-        {saving ? 'Сохраняем…' : 'Сохранить интервалы'}
+        Перейти к оплате · 99 ₽
       </GlassButton>
-      <Toast message={toast} onClose={() => setToast(null)} />
+      <PaymentSheet
+        open={paymentOpen}
+        onClose={() => setPaymentOpen(false)}
+        onConfirmed={save}
+        onSuccess={() => navigate('/', { replace: true })}
+      />
     </div>
   )
 }

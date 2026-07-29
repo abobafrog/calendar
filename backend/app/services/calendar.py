@@ -23,22 +23,27 @@ class CalendarService:
         touching = [
             item
             for item in await self.repository.list_touching(actor.id, data.start_at, data.end_at)
-            if item.visibility == data.visibility
+            if item.visibility == data.visibility and item.title == data.title
         ]
         start_at = min([data.start_at, *(item.start_at for item in touching)])
         end_at = max([data.end_at, *(item.end_at for item in touching)])
-        titles = {item.title for item in touching if item.title}
-        title = data.title if not titles or titles == {data.title} else data.title or "Busy"
         await self.repository.delete_many([item.id for item in touching])
         interval = BusyInterval(
             user_id=actor.id,
             start_at=start_at,
             end_at=end_at,
-            title=title,
+            title=data.title,
             visibility=data.visibility,
         )
         self.session.add(interval)
         await self.session.flush()
+        return interval
+
+    async def get(self, actor: User, interval_id: int) -> BusyInterval:
+        interval = await self.repository.get_by_id(interval_id)
+        if interval is None:
+            raise AppError(404, "interval_not_found", "Calendar interval not found")
+        self.permissions.require_interval_owner(actor, interval)
         return interval
 
     async def create_bulk(self, actor: User, intervals: list[BusyIntervalCreate]) -> list[BusyInterval]:
@@ -69,7 +74,7 @@ class CalendarService:
         touching = [
             item
             for item in await self.repository.list_touching(actor.id, start_at, end_at, exclude_id=current.id)
-            if item.visibility == current.visibility
+            if item.visibility == current.visibility and item.title == current.title
         ]
         if touching:
             current.start_at = min([start_at, *(item.start_at for item in touching)])
@@ -96,9 +101,7 @@ class CalendarService:
         is_owner = actor.id == owner_id
         visible: list[FriendBusyInterval] = []
         for item in intervals:
-            if not is_owner and item.visibility == IntervalVisibility.CLOSED:
-                continue
-            title = item.title if is_owner else None
+            title = item.title if is_owner or item.visibility == IntervalVisibility.OPEN else None
             response_visibility = item.visibility
             visible.append(
                 FriendBusyInterval(

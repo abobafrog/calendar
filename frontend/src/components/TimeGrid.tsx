@@ -35,12 +35,14 @@ export function TimeGrid({
   showFree = false,
   view = 'day',
   timeFormat = '24h',
+  onSelectInterval,
 }: {
   intervals: BusyInterval[]
   date: Date
   showFree?: boolean
   view?: 'day' | 'week'
   timeFormat?: TimeFormat
+  onSelectInterval?: (interval: BusyInterval) => void
 }) {
   if (view === 'week') {
     const monday = new Date(date)
@@ -79,6 +81,7 @@ export function TimeGrid({
                         color={colorForUser(interval.user_id)}
                         timeFormat={timeFormat}
                         compact
+                        onClick={onSelectInterval}
                       />
                     )
                   })}
@@ -111,6 +114,7 @@ export function TimeGrid({
               color={colorForUser(interval.user_id)}
               timeFormat={timeFormat}
               compact={bottom - top < 8}
+              onClick={onSelectInterval}
             />
           )
         })}

@@ -1,6 +1,6 @@
-import { Check, ListFilter, Plus } from 'lucide-react'
+import { Check, ListFilter, Pencil, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useCalendarRange, useCurrentUser, useFriendCalendarRange, useFriends } from '../api/hooks'
 import { DateSwitcher } from '../components/DateSwitcher'
 import { FriendSelector } from '../components/FriendSelector'
@@ -8,6 +8,7 @@ import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
 import { UserAvatar } from '../components/UserAvatar'
 import { TimeGrid } from '../components/TimeGrid'
+import { ModalSheet } from '../components/ModalSheet'
 import { colorForUser } from '../lib/colors'
 import { formatDateInZone, formatTimeInZone } from '../lib/time'
 import type { BusyInterval, Friend, User } from '../lib/types'
@@ -16,6 +17,7 @@ const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 type CalendarView = 'day' | 'week' | 'month'
 
 export function CalendarPage() {
+  const navigate = useNavigate()
   const [date, setDate] = useState(new Date())
   const [view, setView] = useState<CalendarView>(() =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches
@@ -23,6 +25,7 @@ export function CalendarPage() {
       : 'month',
   )
   const [selected, setSelected] = useState<number[]>([])
+  const [selectedInterval, setSelectedInterval] = useState<BusyInterval | null>(null)
   const currentUserQuery = useCurrentUser()
   const friendQuery = useFriends()
   const range = useMemo(() => calendarRange(date, view), [date, view])
@@ -123,6 +126,7 @@ export function CalendarPage() {
             intervals={shownIntervals}
             selectedFriendIds={selected}
             onSelectDate={setDate}
+            onSelectInterval={setSelectedInterval}
           />
         </>
       ) : (
@@ -162,6 +166,7 @@ export function CalendarPage() {
               showFree={selected.length > 0}
               view={view}
               timeFormat={currentUserQuery.data.time_format ?? '24h'}
+              onSelectInterval={setSelectedInterval}
             />
           </div>
           {view === 'day' && (
@@ -188,7 +193,17 @@ export function CalendarPage() {
                         : availableFriends.find((friend) => friend.id === interval.user_id)
                     const title = interval.title ?? 'Занят'
                     return (
-                      <GlassPanel key={interval.id} className="day-agenda__item">
+                      <GlassPanel
+                        key={interval.id}
+                        className="day-agenda__item"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedInterval(interval)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ')
+                            setSelectedInterval(interval)
+                        }}
+                      >
                         <div className="day-agenda__time">
                           <strong>
                             {formatTimeInZone(
@@ -234,6 +249,13 @@ export function CalendarPage() {
       <Link to="/busy/new" className="floating-action" aria-label="Добавить занятость">
         <Plus size={25} />
       </Link>
+      <IntervalSummary
+        interval={selectedInterval}
+        currentUser={currentUserQuery.data}
+        friends={availableFriends}
+        onClose={() => setSelectedInterval(null)}
+        onEdit={(interval) => navigate(`/busy/${interval.id}/edit`)}
+      />
     </div>
   )
 }
@@ -283,12 +305,14 @@ function MonthCalendar({
   intervals,
   selectedFriendIds,
   onSelectDate,
+  onSelectInterval,
 }: {
   date: Date
   currentUserId: number
   intervals: BusyInterval[]
   selectedFriendIds: number[]
   onSelectDate: (date: Date) => void
+  onSelectInterval: (interval: BusyInterval) => void
 }) {
   const days = useMemo(() => monthDays(date), [date])
   const todayKey = dayKey(new Date())
@@ -311,9 +335,10 @@ function MonthCalendar({
             )
           const visible = dayIntervals.slice(0, 4)
           return (
-            <button
+            <div
               key={key}
-              type="button"
+              role="button"
+              tabIndex={0}
               className={[
                 'month-cell',
                 day.getMonth() === date.getMonth() ? '' : 'is-muted',
@@ -323,6 +348,9 @@ function MonthCalendar({
                 .filter(Boolean)
                 .join(' ')}
               onClick={() => onSelectDate(day)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') onSelectDate(day)
+              }}
             >
               <strong>{day.getDate()}</strong>
               <span className="month-cell__events">
@@ -331,25 +359,95 @@ function MonthCalendar({
                   const title =
                     isOwn || selectedFriendIds.includes(interval.user_id) ? interval.title : null
                   return (
-                    <i
+                    <button
+                      type="button"
                       key={`${interval.id}-${key}`}
                       style={
                         { '--chip-color': colorForUser(interval.user_id) } as React.CSSProperties
                       }
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onSelectInterval(interval)
+                      }}
                     >
                       {title ?? 'Занято'}
-                    </i>
+                    </button>
                   )
                 })}
                 {dayIntervals.length > visible.length && (
                   <em>+{dayIntervals.length - visible.length}</em>
                 )}
               </span>
-            </button>
+            </div>
           )
         })}
       </div>
     </section>
+  )
+}
+
+function IntervalSummary({
+  interval,
+  currentUser,
+  friends,
+  onClose,
+  onEdit,
+}: {
+  interval: BusyInterval | null
+  currentUser: User
+  friends: Friend[]
+  onClose: () => void
+  onEdit: (interval: BusyInterval) => void
+}) {
+  if (!interval) return null
+  const isOwn = interval.user_id === currentUser.id
+  const friend = friends.find((item) => item.id === interval.user_id)
+  const owner = isOwn ? currentUser : friend
+  const ownerName = isOwn ? 'Вы' : friend?.alias || friend?.first_name || 'Друг'
+
+  return (
+    <ModalSheet open title={interval.title ?? 'Занят'} onClose={onClose}>
+      <div className="interval-summary">
+        <div className="interval-summary__owner">
+          <UserAvatar user={owner ?? currentUser} size="md" />
+          <div>
+            <strong>{ownerName}</strong>
+            <span>Дело в календаре</span>
+          </div>
+        </div>
+        <dl>
+          <div>
+            <dt>Когда</dt>
+            <dd>
+              {formatDateInZone(interval.start_at, currentUser.timezone ?? 'UTC')},{' '}
+              {formatTimeInZone(
+                interval.start_at,
+                currentUser.timezone ?? 'UTC',
+                currentUser.time_format ?? '24h',
+              )}
+              {' — '}
+              {formatTimeInZone(
+                interval.end_at,
+                currentUser.timezone ?? 'UTC',
+                currentUser.time_format ?? '24h',
+              )}
+            </dd>
+          </div>
+          {!isOwn && !interval.title && (
+            <div>
+              <dt>Детали</dt>
+              <dd>Друг скрыл название дела</dd>
+            </div>
+          )}
+        </dl>
+        {isOwn && (
+          <GlassButton variant="primary" onClick={() => onEdit(interval)}>
+            <Pencil size={17} />
+            Редактировать дело
+          </GlassButton>
+        )}
+      </div>
+    </ModalSheet>
   )
 }
 

@@ -38,7 +38,9 @@ export function FriendsPage() {
   const incomingRequests = incomingQuery.data ?? []
   const outgoingRequests = outgoingQuery.data ?? []
   const inviteCode = currentUserQuery.data?.invite_code ?? ''
-  const inviteLink = `${window.location.origin}/friends?invite=${inviteCode}`
+  const inviterName = currentUserQuery.data?.first_name ?? ''
+  const inviteParams = new URLSearchParams({ invite: inviteCode, from: inviterName })
+  const inviteLink = `${window.location.origin}/friends?${inviteParams.toString()}`
   const normalizedQuery = query.trim().replace(/^@/, '').toLowerCase()
   const showError = useCallback(
     (error: unknown) => setToast(error instanceof Error ? error.message : 'Операция не выполнена'),
@@ -51,11 +53,12 @@ export function FriendsPage() {
 
   useEffect(() => {
     const code = searchParams.get('invite')
+    const from = searchParams.get('from')
     if (!code || createRequest.isPending) return
     void createRequest
       .mutateAsync({ invite_code: code })
       .then(async () => {
-        setToast('Приглашение отправлено')
+        setToast(from ? `${from} приглашает вас — запрос отправлен` : 'Приглашение отправлено')
         setSearchParams({})
         await invalidateSocialData()
       })
@@ -236,7 +239,7 @@ export function FriendsPage() {
           <GlassPanel className="invite-panel">
             <div>
               <span>Персональная ссылка</span>
-              <strong>Пригласить на сайт</strong>
+              <strong>Приглашает {inviterName || 'пользователь'}</strong>
             </div>
             <GlassButton
               variant="icon"

@@ -107,6 +107,14 @@ export function useCalendarRange(start: Date, end: Date) {
   })
 }
 
+export function useBusyInterval(id: number) {
+  return useQuery({
+    enabled: Number.isInteger(id) && id > 0,
+    queryKey: ['calendar', 'interval', id],
+    queryFn: () => apiRequest<BusyInterval>(`/calendar/intervals/${id}`),
+  })
+}
+
 export function useFriendCalendarRange(start: Date, end: Date, userIds: number[]) {
   const from = start.toISOString()
   const to = end.toISOString()
