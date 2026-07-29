@@ -23,9 +23,9 @@ class TimeSpan:
 
     def __post_init__(self) -> None:
         if self.start_at.tzinfo is None or self.end_at.tzinfo is None:
-            raise ValueError("TimeSpan values must be timezone-aware")
+            raise ValueError("Значения времени должны содержать часовой пояс")
         if self.start_at >= self.end_at:
-            raise ValueError("TimeSpan start must be earlier than end")
+            raise ValueError("Начало периода должно быть раньше конца")
 
 
 def merge_spans(spans: list[TimeSpan]) -> list[TimeSpan]:
@@ -74,7 +74,7 @@ def _valid_local_to_utc(local_value: datetime, timezone: ZoneInfo, prefer_late: 
         aware = probe.replace(tzinfo=timezone)
         if aware.astimezone(UTC).astimezone(timezone).replace(tzinfo=None) == probe:
             return aware.astimezone(UTC)
-    raise ValueError("Could not resolve local time near a timezone transition")
+    raise ValueError("Не удалось определить местное время при смене часового пояса")
 
 
 def build_allowed_windows(
@@ -125,7 +125,7 @@ class AvailabilityService:
     async def search(self, actor: User, data: AvailabilitySearchRequest) -> AvailabilitySearchResponse:
         range_days = (data.date_to - data.date_from).days + 1
         if range_days > self.settings.max_availability_range_days:
-            raise AppError(422, "range_too_wide", "Availability range is too wide")
+            raise AppError(422, "range_too_wide", "Выбран слишком большой период поиска")
 
         participant_ids = sorted(set(data.participant_ids) | {actor.id})
         for participant_id in participant_ids:
@@ -133,7 +133,7 @@ class AvailabilityService:
                 raise AppError(
                     403,
                     "availability_access_denied",
-                    "Availability may only include accepted friends",
+                    "В поиск времени можно добавлять только принятых друнов",
                 )
 
         windows = build_allowed_windows(

@@ -31,7 +31,6 @@ class UserUpdate(APIModel):
     first_name: str | None = Field(default=None, min_length=1, max_length=128)
     last_name: str | None = Field(default=None, max_length=128)
     username: str | None = Field(default=None, min_length=3, max_length=64, pattern=r"^[a-zA-Z0-9_.-]+$")
-    photo_url: str | None = Field(default=None, max_length=2048)
     timezone: str | None = None
     week_starts_on: int | None = Field(default=None, ge=1, le=7)
     time_format: TimeFormat | None = None
@@ -47,5 +46,5 @@ class UserUpdate(APIModel):
     @model_validator(mode="after")
     def valid_workday(self) -> "UserUpdate":
         if self.workday_start and self.workday_end and self.workday_start >= self.workday_end:
-            raise ValueError("workday_start must be earlier than workday_end")
+            raise ValueError("Начало рабочего времени должно быть раньше конца")
         return self

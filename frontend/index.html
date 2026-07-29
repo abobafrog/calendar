@@ -12,14 +12,10 @@
       name="description"
       content="Приватный общий календарь и поиск свободного времени с друзьями."
     />
-    <title>TimeTogether</title>
+    <title>Время вместе</title>
   </head>
   <body>
-    <script>
-      const savedTheme = localStorage.getItem('timetogether-theme')
-      document.documentElement.dataset.theme =
-        savedTheme === 'light' || savedTheme === 'contrast' ? savedTheme : 'dark'
-    </script>
+    <script src="/theme-init.js"></script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -12,7 +12,7 @@ from app.core.telegram_auth import verify_telegram_init_data
 
 def settings() -> Settings:
     return Settings(
-        app_secret_key="test-secret-key-that-is-long-enough-2026",
+        app_secret_key="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
         bot_token="123456:test-token",
         database_url="postgresql+asyncpg://test:test@localhost/test",
     )
@@ -43,5 +43,5 @@ async def test_valid_signature_can_be_reused_while_fresh() -> None:
 @pytest.mark.asyncio
 async def test_stale_init_data_is_rejected() -> None:
     now = datetime(2026, 7, 24, 8, tzinfo=UTC)
-    with pytest.raises(AppError, match="expired"):
+    with pytest.raises(AppError, match="устарели"):
         await verify_telegram_init_data(signed_init_data(now - timedelta(hours=1)), settings(), now)

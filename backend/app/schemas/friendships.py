@@ -14,7 +14,7 @@ class FriendRequestCreate(APIModel):
     @model_validator(mode="after")
     def exactly_one_identifier(self) -> "FriendRequestCreate":
         if bool(self.username) == bool(self.invite_code):
-            raise ValueError("provide exactly one of username or invite_code")
+            raise ValueError("Укажите только логин или код приглашения")
         return self
 
 

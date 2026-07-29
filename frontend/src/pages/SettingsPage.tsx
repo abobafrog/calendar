@@ -5,6 +5,7 @@ import {
   Copy,
   Edit2,
   Globe2,
+  LogOut,
   Moon,
   ShieldCheck,
   Sun,
@@ -20,7 +21,9 @@ import { UserAvatar } from '../components/UserAvatar'
 import { useTheme } from '../hooks/useTheme'
 import { useCurrentUser, useUpdateCurrentUser } from '../api/hooks'
 import { formatLocalClockTime } from '../lib/time'
+import { timezoneLabel, timezoneOptionsWithCurrent } from '../lib/timezones'
 import type { ThemeMode, User } from '../lib/types'
+import { signOut } from '../api/client'
 
 const themes: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: 'light', label: 'Светлая', icon: Sun },
@@ -115,7 +118,7 @@ export function SettingsPage() {
             <Globe2 size={19} />
             <span>
               <strong>Часовой пояс</strong>
-              <small>{currentUser.timezone}</small>
+              <small>{timezoneLabel(currentUser.timezone ?? 'UTC')}</small>
             </span>
             <ChevronRight size={18} />
           </button>
@@ -163,18 +166,37 @@ export function SettingsPage() {
           </label>
         </GlassPanel>
       </section>
+      <section className="settings-section">
+        <h2>Аккаунт</h2>
+        <GlassPanel className="settings-list">
+          <button
+            type="button"
+            className="settings-logout"
+            onClick={async () => {
+              if (!window.confirm('Выйти из аккаунта на этом устройстве?')) return
+              queryClient.clear()
+              await signOut()
+            }}
+          >
+            <LogOut size={19} />
+            <span>
+              <strong>Выйти из аккаунта</strong>
+              <small>Для следующего входа понадобятся логин и пароль</small>
+            </span>
+          </button>
+        </GlassPanel>
+      </section>
       <p className="settings-note">
-        Доступ к календарю есть только у принятых друзей. Открытый интервал показывается им как
-        «занят», закрытый доступен только вам.
+        Доступ к календарю есть только у принятых друнов. Если показ деталей включён, они увидят
+        название дела; иначе — только статус «Занят».
       </p>
       <SettingsSheet
-        key={`${sheet ?? 'closed'}-${currentUser.first_name}-${currentUser.last_name ?? ''}-${currentUser.username ?? ''}-${currentUser.photo_url ?? ''}-${currentUser.timezone}`}
+        key={`${sheet ?? 'closed'}-${currentUser.first_name}-${currentUser.last_name ?? ''}-${currentUser.username ?? ''}-${currentUser.timezone}`}
         sheet={sheet}
         timezone={currentUser.timezone ?? 'UTC'}
         firstName={currentUser.first_name}
         lastName={currentUser.last_name ?? ''}
         username={currentUser.username ?? ''}
-        photoUrl={currentUser.photo_url ?? ''}
         workdayStart={workdayStart}
         workdayEnd={workdayEnd}
         timeFormat={timeFormat}
@@ -194,7 +216,6 @@ function SettingsSheet({
   firstName,
   lastName,
   username,
-  photoUrl,
   workdayStart,
   workdayEnd,
   timeFormat,
@@ -208,7 +229,6 @@ function SettingsSheet({
   firstName: string
   lastName: string
   username: string
-  photoUrl: string
   workdayStart: string
   workdayEnd: string
   timeFormat: '12h' | '24h'
@@ -221,7 +241,6 @@ function SettingsSheet({
   const [profileFirstName, setProfileFirstName] = useState(firstName)
   const [profileLastName, setProfileLastName] = useState(lastName)
   const [profileUsername, setProfileUsername] = useState(username)
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState(photoUrl)
   const [start, setStart] = useState(workdayStart)
   const [end, setEnd] = useState(workdayEnd)
   const [format, setFormat] = useState<'12h' | '24h'>(timeFormat)
@@ -230,8 +249,7 @@ function SettingsSheet({
     (sheet === 'profile' &&
       (profileFirstName !== firstName ||
         profileLastName !== lastName ||
-        profileUsername !== username ||
-        profilePhotoUrl !== photoUrl)) ||
+        profileUsername !== username)) ||
     (sheet === 'timezone' && zone !== timezone) ||
     (sheet === 'workday' && (start !== workdayStart || end !== workdayEnd)) ||
     (sheet === 'format' && (format !== timeFormat || weekStart !== weekStartsOn))
@@ -282,32 +300,23 @@ function SettingsSheet({
             </label>
           </div>
           <label className="field">
-            <span>@username</span>
+            <span>Логин</span>
             <input
               value={profileUsername}
               onChange={(event) => setProfileUsername(event.target.value)}
               placeholder="tima_schedule"
             />
           </label>
-          <label className="field">
-            <span>Фото URL</span>
-            <input
-              value={profilePhotoUrl}
-              onChange={(event) => setProfilePhotoUrl(event.target.value)}
-              placeholder="https://..."
-            />
-          </label>
           <GlassButton
             disabled={saving || !profileFirstName.trim() || !profileUsername.trim()}
             onClick={() => {
-              if (!window.confirm('Сохранить изменения профиля? Username используется для входа.'))
+              if (!window.confirm('Сохранить изменения профиля? Логин используется для входа.'))
                 return
               void onSave(
                 {
                   first_name: profileFirstName,
                   last_name: profileLastName || null,
                   username: profileUsername,
-                  photo_url: profilePhotoUrl || null,
                 },
                 'Профиль сохранён',
               )
@@ -320,20 +329,11 @@ function SettingsSheet({
       {sheet === 'timezone' && (
         <div className="sheet-form">
           <label className="field">
-            <span>IANA timezone</span>
+            <span>Часовой пояс</span>
             <select value={zone} onChange={(event) => setZone(event.target.value)}>
-              {[
-                'UTC',
-                'Europe/Moscow',
-                'Europe/Amsterdam',
-                'Asia/Tbilisi',
-                'Asia/Dubai',
-                'Asia/Almaty',
-                'Asia/Yekaterinburg',
-                'America/New_York',
-              ].map((item) => (
-                <option key={item} value={item}>
-                  {item}
+              {timezoneOptionsWithCurrent(zone).map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
                 </option>
               ))}
             </select>

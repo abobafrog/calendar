@@ -12,7 +12,7 @@ class TelegramAuthRequest(APIModel):
 
 class RegisterRequest(APIModel):
     username: str = Field(min_length=3, max_length=64, pattern=r"^[a-zA-Z0-9_.-]+$")
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=12, max_length=128)
     first_name: str = Field(min_length=1, max_length=128)
     last_name: str | None = Field(default=None, max_length=128)
     timezone: str = Field(default="UTC", max_length=64)
@@ -34,7 +34,5 @@ class LoginRequest(APIModel):
 
 
 class AuthResponse(APIModel):
-    access_token: str
-    token_type: str = "bearer"
     expires_at: datetime
     user: UserResponse

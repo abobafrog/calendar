@@ -8,6 +8,7 @@ from app.repositories.users import UserRepository
 from app.schemas.users import UserResponse, UserSummary, UserUpdate
 from fastapi import APIRouter, Depends, Query
 from redis.asyncio import Redis
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -24,7 +25,7 @@ async def lookup_user(
     user = await UserRepository(session).get_by_username(username)
 
     if user is None or user.id == current_user.id:
-        raise AppError(404, "user_not_found", "No user matches that exact username")
+        raise AppError(404, "user_not_found", "Пользователь с таким логином не найден")
     return UserSummary.model_validate(user)
 
 
@@ -50,12 +51,13 @@ async def update_me(
     payload: UserUpdate,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
 ) -> User:
+    await enforce_rate_limit(redis, f"rate:user-update:{current_user.id}", RateLimit(30, 3600))
     allowed_fields = {
         "first_name",
         "last_name",
         "username",
-        "photo_url",
         "timezone",
         "week_starts_on",
         "time_format",
@@ -65,11 +67,11 @@ async def update_me(
     }
     repository = UserRepository(session)
     if "username" in payload.model_fields_set and payload.username is None:
-        raise AppError(422, "invalid_username", "Username cannot be empty")
+        raise AppError(422, "invalid_username", "Логин не может быть пустым")
     if payload.username is not None and await repository.is_username_taken(
         payload.username, exclude_user_id=current_user.id
     ):
-        raise AppError(409, "username_already_taken", "This username is already taken")
+        raise AppError(409, "username_already_taken", "Этот логин уже занят")
     for field_name in payload.model_fields_set & allowed_fields:
         value = getattr(payload, field_name)
         if field_name == "username" and isinstance(value, str):
@@ -77,10 +79,8 @@ async def update_me(
         if field_name == "first_name" and isinstance(value, str):
             value = value.strip()
             if not value:
-                raise AppError(422, "invalid_first_name", "First name cannot be empty")
+                raise AppError(422, "invalid_first_name", "Имя не может быть пустым")
         if field_name == "last_name" and isinstance(value, str):
-            value = value.strip() or None
-        if field_name == "photo_url" and isinstance(value, str):
             value = value.strip() or None
         if field_name == "timezone" and isinstance(value, str):
             from app.schemas.common import validate_timezone
@@ -88,7 +88,11 @@ async def update_me(
             value = validate_timezone(value)
         setattr(current_user, field_name, value)
     if current_user.workday_start >= current_user.workday_end:
-        raise AppError(422, "invalid_workday", "Workday start must be before workday end")
-    await session.commit()
+        raise AppError(422, "invalid_workday", "Начало рабочего времени должно быть раньше конца")
+    try:
+        await session.commit()
+    except IntegrityError as exc:
+        await session.rollback()
+        raise AppError(409, "username_already_taken", "Этот логин уже занят") from exc
     await session.refresh(current_user)
     return current_user

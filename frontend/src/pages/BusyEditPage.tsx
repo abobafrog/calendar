@@ -165,7 +165,7 @@ function BusyEditForm({ interval }: { interval: BusyInterval }) {
 
           <GlassPanel className="form-section">
             <div className="form-label">
-              <span>Показывать друзьям</span>
+              <span>Показывать друнам</span>
             </div>
             <div className="visibility-options">
               <button
@@ -176,7 +176,7 @@ function BusyEditForm({ interval }: { interval: BusyInterval }) {
                 <Eye size={19} />
                 <span>
                   <strong>Да, показать дело</strong>
-                  <small>Друзья увидят название и время</small>
+                  <small>Друны увидят название и время</small>
                 </span>
               </button>
               <button
@@ -187,7 +187,7 @@ function BusyEditForm({ interval }: { interval: BusyInterval }) {
                 <LockKeyhole size={19} />
                 <span>
                   <strong>Нет, скрыть детали</strong>
-                  <small>Друзья увидят только «Занят»</small>
+                  <small>Друны увидят только «Занят»</small>
                 </span>
               </button>
             </div>

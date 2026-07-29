@@ -3,16 +3,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { ThemeBackground } from './components/ThemeBackground'
-import {
-  AUTH_REQUIRED_EVENT,
-  ApiError,
-  apiRequest,
-  clearAccessToken,
-  hasAccessToken,
-  setAccessToken,
-} from './api/client'
+import { AUTH_REQUIRED_EVENT, ApiError, apiRequest } from './api/client'
 import { useTheme } from './hooks/useTheme'
 import { resetMobileViewport } from './lib/viewport'
+import { initializeTelegram } from './lib/telegram'
 import type { AuthResponse, User } from './lib/types'
 import { AvailabilityPage } from './pages/AvailabilityPage'
 import { BusyCreatePage } from './pages/BusyCreatePage'
@@ -27,21 +21,19 @@ import { SettingsPage } from './pages/SettingsPage'
 export default function App() {
   useTheme()
   const queryClient = useQueryClient()
-  const [session, setSession] = useState<'checking' | 'authenticated' | 'anonymous'>(() =>
-    hasAccessToken() ? 'checking' : 'anonymous',
-  )
+  const [session, setSession] = useState<'checking' | 'authenticated' | 'anonymous'>('checking')
   const [sessionMessage, setSessionMessage] = useState('Проверяем сессию…')
 
   useEffect(() => {
     let active = true
     let retryTimer: number | undefined
     const requireAuthentication = () => {
-      clearAccessToken()
       queryClient.clear()
       if (active) setSession('anonymous')
     }
     const verifySession = () => {
-      void apiRequest<User>('/users/me')
+      void initializeTelegram()
+        .then(() => apiRequest<User>('/users/me'))
         .then((user) => {
           if (!active) return
           queryClient.setQueryData(['me'], user)
@@ -61,9 +53,7 @@ export default function App() {
     }
 
     window.addEventListener(AUTH_REQUIRED_EVENT, requireAuthentication)
-    if (hasAccessToken()) {
-      verifySession()
-    }
+    verifySession()
 
     return () => {
       active = false
@@ -73,7 +63,6 @@ export default function App() {
   }, [queryClient])
 
   function handleAuthenticated(auth: AuthResponse) {
-    setAccessToken(auth.access_token)
     queryClient.setQueryData(['me'], auth.user)
     setSession('authenticated')
     resetMobileViewport()

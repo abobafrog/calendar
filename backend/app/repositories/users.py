@@ -76,10 +76,12 @@ class UserRepository:
 
     async def upsert_telegram(self, data: TelegramUserData) -> User:
         user = await self.get_by_telegram_id(data.id)
+        username_owner = await self.get_by_username(data.username) if data.username else None
+        safe_username = data.username if username_owner is None or username_owner.telegram_id == data.id else None
         if user is None:
             user = User(
                 telegram_id=data.id,
-                username=data.username,
+                username=safe_username,
                 first_name=data.first_name,
                 last_name=data.last_name,
                 photo_url=data.photo_url,
@@ -87,7 +89,7 @@ class UserRepository:
             )
             self.session.add(user)
         else:
-            user.username = data.username
+            user.username = safe_username
             user.first_name = data.first_name
             user.last_name = data.last_name
             user.photo_url = data.photo_url

@@ -5,7 +5,7 @@ import { useMarkNotificationRead, useNotifications } from '../api/hooks'
 import type { SiteNotification } from '../lib/types'
 
 const notificationText: Record<string, { title: string; message: string }> = {
-  friend_request_created: { title: 'Новая заявка', message: 'Вам отправили заявку в друзья.' },
+  friend_request_created: { title: 'Новая заявка', message: 'Вам отправили заявку в друны.' },
   friend_request_accepted: {
     title: 'Заявка принята',
     message: 'Теперь вы можете сравнивать календари.',
@@ -19,7 +19,7 @@ const notificationText: Record<string, { title: string; message: string }> = {
 function describe(notification: SiteNotification) {
   return (
     notificationText[notification.type] ?? {
-      title: 'TimeTogether',
+      title: 'Время вместе',
       message: 'У вас новое уведомление.',
     }
   )

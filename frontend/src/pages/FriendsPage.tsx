@@ -5,11 +5,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
 import { Toast } from '../components/Toast'
+import { ModalSheet } from '../components/ModalSheet'
 import { UserAvatar } from '../components/UserAvatar'
 import {
   useCreateFriendRequest,
   useCurrentUser,
   useFriendAction,
+  useFriendInvitePreview,
   useFriendRequestResponse,
   useFriends,
   useIncomingFriendRequests,
@@ -39,8 +41,10 @@ export function FriendsPage() {
   const outgoingRequests = outgoingQuery.data ?? []
   const inviteCode = currentUserQuery.data?.invite_code ?? ''
   const inviterName = currentUserQuery.data?.first_name ?? ''
-  const inviteParams = new URLSearchParams({ invite: inviteCode, from: inviterName })
+  const inviteParams = new URLSearchParams({ invite: inviteCode })
   const inviteLink = `${window.location.origin}/friends?${inviteParams.toString()}`
+  const receivedInviteCode = searchParams.get('invite') ?? ''
+  const invitePreview = useFriendInvitePreview(receivedInviteCode)
   const normalizedQuery = query.trim().replace(/^@/, '').toLowerCase()
   const showError = useCallback(
     (error: unknown) => setToast(error instanceof Error ? error.message : 'Операция не выполнена'),
@@ -52,23 +56,6 @@ export function FriendsPage() {
   }, [queryClient])
 
   useEffect(() => {
-    const code = searchParams.get('invite')
-    const from = searchParams.get('from')
-    if (!code || createRequest.isPending) return
-    void createRequest
-      .mutateAsync({ invite_code: code })
-      .then(async () => {
-        setToast(from ? `${from} приглашает вас — запрос отправлен` : 'Приглашение отправлено')
-        setSearchParams({})
-        await invalidateSocialData()
-      })
-      .catch((error) => {
-        showError(error)
-        setSearchParams({})
-      })
-  }, [createRequest, invalidateSocialData, searchParams, setSearchParams, showError])
-
-  useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(normalizedQuery), 350)
     return () => window.clearTimeout(timer)
   }, [normalizedQuery])
@@ -77,7 +64,7 @@ export function FriendsPage() {
       <header className="page-header">
         <div>
           <span className="eyebrow">Связи</span>
-          <h1>Друзья</h1>
+          <h1>Друны</h1>
         </div>
         <span className="number-badge">{visibleFriends.length}</span>
       </header>
@@ -117,8 +104,8 @@ export function FriendsPage() {
               autoCapitalize="none"
               spellCheck={false}
               inputMode="text"
-              placeholder="Точный @username"
-              aria-label="Поиск по точному username"
+              placeholder="Точный логин"
+              aria-label="Поиск по точному логину"
             />
             <GlassButton
               variant="primary"
@@ -166,7 +153,7 @@ export function FriendsPage() {
             </div>
           )}
           <section className="list-section">
-            <h2>Мои друзья</h2>
+            <h2>Мои друны</h2>
             <div className="people-list">
               {visibleFriends.map((friend) => (
                 <article key={friend.id} className="person-row">
@@ -180,10 +167,10 @@ export function FriendsPage() {
                   <div className="row-actions">
                     <button
                       type="button"
-                      aria-label="Переименовать друга"
+                      aria-label="Переименовать друна"
                       onClick={async () => {
                         const next = window.prompt(
-                          'Имя друга только для вас',
+                          'Имя друна только для вас',
                           friend.alias ?? friend.first_name,
                         )
                         if (next === null) return
@@ -203,11 +190,11 @@ export function FriendsPage() {
                     </button>
                     <button
                       type="button"
-                      aria-label="Удалить из друзей"
+                      aria-label="Удалить из друнов"
                       onClick={async () => {
                         try {
                           await friendAction.mutateAsync({ userId: friend.id, action: 'remove' })
-                          setToast('Друг удалён')
+                          setToast('Друн удалён')
                           await invalidateSocialData()
                         } catch (error) {
                           showError(error)
@@ -314,10 +301,51 @@ export function FriendsPage() {
               ? `Ожидающих запросов: ${outgoingRequests.length}`
               : 'Нет ожидающих запросов'}
           </h2>
-          <p>Поиск показывает до шести совпадений по username.</p>
+          <p>Поиск показывает до шести совпадений по логину.</p>
         </div>
       )}
       <Toast message={toast} onClose={() => setToast(null)} />
+      <ModalSheet
+        open={Boolean(receivedInviteCode)}
+        title="Приглашение в друны"
+        onClose={() => setSearchParams({})}
+      >
+        <div className="invite-confirmation">
+          {invitePreview.isLoading ? (
+            <p>Проверяем приглашение…</p>
+          ) : invitePreview.data ? (
+            <>
+              <UserAvatar user={invitePreview.data} size="lg" />
+              <div>
+                <strong>{invitePreview.data.first_name} приглашает вас</strong>
+                <span>@{invitePreview.data.username}</span>
+              </div>
+              <GlassButton
+                variant="primary"
+                disabled={createRequest.isPending}
+                onClick={async () => {
+                  try {
+                    await createRequest.mutateAsync({ invite_code: receivedInviteCode })
+                    setSearchParams({})
+                    setToast('Запрос в друны отправлен')
+                    await invalidateSocialData()
+                  } catch (error) {
+                    showError(error)
+                  }
+                }}
+              >
+                <UserPlus size={18} />
+                Отправить запрос
+              </GlassButton>
+            </>
+          ) : (
+            <>
+              <strong>Приглашение недействительно</strong>
+              <GlassButton onClick={() => setSearchParams({})}>Закрыть</GlassButton>
+            </>
+          )}
+        </div>
+      </ModalSheet>
     </div>
   )
 }

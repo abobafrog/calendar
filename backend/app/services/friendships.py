@@ -26,17 +26,17 @@ class FriendshipService:
             else await self.users.get_by_invite_code(data.invite_code or "")
         )
         if target is None:
-            raise AppError(404, "user_not_found", "No user matches that exact identifier")
+            raise AppError(404, "user_not_found", "Пользователь с таким логином не найден")
         if target.id == actor.id:
-            raise AppError(422, "self_friendship", "You cannot invite yourself")
+            raise AppError(422, "self_friendship", "Нельзя пригласить самого себя")
 
         await self.repository.lock_users([actor.id, target.id])
         relation = await self.repository.get_pair(actor.id, target.id, for_update=True)
         if relation is not None:
             if relation.status == FriendshipStatus.BLOCKED:
-                raise AppError(403, "friendship_blocked", "A blocked relationship cannot be invited")
+                raise AppError(403, "friendship_blocked", "Нельзя отправить приглашение заблокированному пользователю")
             if relation.status == FriendshipStatus.ACCEPTED:
-                raise AppError(409, "already_friends", "You are already friends")
+                raise AppError(409, "already_friends", "Этот пользователь уже ваш друн")
             if relation.status == FriendshipStatus.PENDING:
                 if relation.requester_id == target.id:
                     relation.status = FriendshipStatus.ACCEPTED
@@ -45,7 +45,7 @@ class FriendshipService:
                     )
                     await self.session.commit()
                     return relation
-                raise AppError(409, "friend_request_exists", "A friend request already exists")
+                raise AppError(409, "friend_request_exists", "Заявка в друны уже отправлена")
             relation.requester_id = actor.id
             relation.addressee_id = target.id
             relation.status = FriendshipStatus.PENDING
@@ -61,9 +61,9 @@ class FriendshipService:
     async def respond(self, actor: User, friendship_id: int, accept: bool) -> Friendship:
         relation = await self.repository.get_by_id(friendship_id, for_update=True)
         if relation is None or relation.addressee_id != actor.id:
-            raise AppError(404, "friend_request_not_found", "Friend request not found")
+            raise AppError(404, "friend_request_not_found", "Заявка в друны не найдена")
         if relation.status != FriendshipStatus.PENDING:
-            raise AppError(409, "friend_request_resolved", "Friend request is already resolved")
+            raise AppError(409, "friend_request_resolved", "На эту заявку уже ответили")
         relation.status = FriendshipStatus.ACCEPTED if accept else FriendshipStatus.REJECTED
         await self.notifications.create(
             relation.requester_id,
@@ -76,15 +76,15 @@ class FriendshipService:
     async def remove_friend(self, actor: User, friend_id: int) -> None:
         relation = await self.repository.get_pair(actor.id, friend_id, for_update=True)
         if relation is None or relation.status != FriendshipStatus.ACCEPTED:
-            raise AppError(404, "friendship_not_found", "Friendship not found")
+            raise AppError(404, "friendship_not_found", "Друн не найден")
         await self.session.delete(relation)
         await self.session.commit()
 
     async def block(self, actor: User, target_id: int) -> Friendship:
         if target_id == actor.id:
-            raise AppError(status.HTTP_422_UNPROCESSABLE_ENTITY, "self_block", "You cannot block yourself")
+            raise AppError(status.HTTP_422_UNPROCESSABLE_ENTITY, "self_block", "Нельзя заблокировать самого себя")
         if await self.users.get_by_id(target_id) is None:
-            raise AppError(404, "user_not_found", "User not found")
+            raise AppError(404, "user_not_found", "Пользователь не найден")
         await self.repository.lock_users([actor.id, target_id])
         relation = await self.repository.get_pair(actor.id, target_id, for_update=True)
         if relation is None:
@@ -103,10 +103,10 @@ class FriendshipService:
 
     async def set_alias(self, actor: User, target_id: int, alias: str | None) -> Friendship:
         if actor.id == target_id:
-            raise AppError(422, "self_friendship", "You cannot rename yourself here")
+            raise AppError(422, "self_friendship", "Здесь нельзя переименовать самого себя")
         relation = await self.repository.get_pair(actor.id, target_id, for_update=True)
         if relation is None or relation.status != FriendshipStatus.ACCEPTED:
-            raise AppError(404, "friendship_not_found", "Accepted friendship not found")
+            raise AppError(404, "friendship_not_found", "Принятый друн не найден")
         if relation.requester_id == actor.id:
             relation.requester_alias = alias
         else:

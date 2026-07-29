@@ -27,6 +27,22 @@ def serialize_request(relation: Friendship, actor_id: int) -> FriendshipResponse
     return FriendshipResponse.model_validate(relation).model_copy(update={"user": UserSummary.model_validate(other)})
 
 
+@router.get("/friend-invites/{invite_code}", response_model=UserSummary)
+async def preview_friend_invite(
+    invite_code: str,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
+) -> UserSummary:
+    await enforce_rate_limit(redis, f"rate:friend-preview:{current_user.id}", RateLimit(30, 3600))
+    if len(invite_code) < 8 or len(invite_code) > 32:
+        raise AppError(404, "invite_not_found", "Приглашение не найдено")
+    inviter = await UserRepository(session).get_by_invite_code(invite_code)
+    if inviter is None or inviter.id == current_user.id:
+        raise AppError(404, "invite_not_found", "Приглашение не найдено")
+    return UserSummary.model_validate(inviter)
+
+
 @router.get("/friends", response_model=list[FriendResponse])
 async def list_friends(
     current_user: User = Depends(get_current_user),
@@ -82,6 +98,7 @@ async def accept_friend_request(
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
 ) -> FriendshipResponse:
+    await enforce_rate_limit(redis, f"rate:friend-write:{current_user.id}", RateLimit(120, 3600))
     relation = await FriendshipService(session, redis).respond(current_user, friendship_id, True)
     return FriendshipResponse.model_validate(relation)
 
@@ -93,6 +110,7 @@ async def reject_friend_request(
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
 ) -> FriendshipResponse:
+    await enforce_rate_limit(redis, f"rate:friend-write:{current_user.id}", RateLimit(120, 3600))
     relation = await FriendshipService(session, redis).respond(current_user, friendship_id, False)
     return FriendshipResponse.model_validate(relation)
 
@@ -102,7 +120,9 @@ async def remove_friend(
     user_id: int,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
 ) -> Response:
+    await enforce_rate_limit(redis, f"rate:friend-write:{current_user.id}", RateLimit(120, 3600))
     await FriendshipService(session).remove_friend(current_user, user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -113,11 +133,13 @@ async def rename_friend(
     payload: FriendAliasUpdate,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
 ) -> FriendResponse:
+    await enforce_rate_limit(redis, f"rate:friend-write:{current_user.id}", RateLimit(120, 3600))
     relation = await FriendshipService(session).set_alias(current_user, user_id, payload.alias)
     friend = await UserRepository(session).get_by_id(user_id)
     if friend is None:
-        raise AppError(404, "friendship_not_found", "Friendship not found")
+        raise AppError(404, "friendship_not_found", "Друн не найден")
     return FriendResponse(
         **UserSummary.model_validate(friend).model_dump(),
         friendship_id=relation.id,
@@ -131,5 +153,7 @@ async def block_user(
     user_id: int,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
 ) -> Friendship:
+    await enforce_rate_limit(redis, f"rate:friend-write:{current_user.id}", RateLimit(120, 3600))
     return await FriendshipService(session).block(current_user, user_id)

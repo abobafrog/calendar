@@ -16,7 +16,7 @@ class DateRangeMixin(BaseModel):
     @classmethod
     def require_timezone(cls, value: datetime) -> datetime:
         if value.tzinfo is None or value.utcoffset() is None:
-            raise ValueError("datetime must include a timezone offset")
+            raise ValueError("Дата и время должны содержать часовой пояс")
         return value.astimezone(UTC)
 
 
@@ -24,5 +24,5 @@ def validate_timezone(value: str) -> str:
     try:
         ZoneInfo(value)
     except ZoneInfoNotFoundError as exc:
-        raise ValueError("timezone must be a valid IANA timezone") from exc
+        raise ValueError("Укажите правильный часовой пояс") from exc
     return value

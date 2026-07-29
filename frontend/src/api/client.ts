@@ -1,23 +1,12 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
 export const AUTH_REQUIRED_EVENT = 'timetogether:auth-required'
 
-let accessToken: string | null =
-  localStorage.getItem('access_token') ?? sessionStorage.getItem('access_token')
-
-export function hasAccessToken() {
-  return Boolean(accessToken)
-}
-
-export function setAccessToken(token: string) {
-  accessToken = token
-  sessionStorage.setItem('access_token', token)
-  localStorage.setItem('access_token', token)
-}
-
-export function clearAccessToken() {
-  accessToken = null
-  sessionStorage.removeItem('access_token')
-  localStorage.removeItem('access_token')
+export async function signOut() {
+  try {
+    await apiRequest('/auth/logout', { method: 'POST' })
+  } finally {
+    window.dispatchEvent(new Event(AUTH_REQUIRED_EVENT))
+  }
 }
 
 export class ApiError extends Error {
@@ -39,10 +28,10 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   try {
     response = await fetch(`${API_URL}${path}`, {
       ...init,
+      credentials: 'include',
       signal: init.signal ?? controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...init.headers,
       },
     })
@@ -56,12 +45,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   }
   if (!response.ok) {
     const body = await response.json().catch(() => null)
-    if (response.status === 401 && accessToken) {
-      clearAccessToken()
+    if (response.status === 401 && path !== '/auth/login' && path !== '/auth/register') {
       window.dispatchEvent(new Event(AUTH_REQUIRED_EVENT))
     }
     throw new ApiError(
-      body?.error?.message ?? `API error ${response.status}`,
+      body?.error?.message ?? `Ошибка сервера: ${response.status}`,
       response.status,
       body?.error?.code,
     )

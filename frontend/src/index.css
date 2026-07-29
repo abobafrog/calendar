@@ -870,8 +870,8 @@ select:focus-visible {
   background: var(--grid-line);
 }
 .week-column .busy-block {
-  left: 2px;
-  width: calc(100% - 4px);
+  left: calc(var(--lane-index) * 100% / var(--lane-count) + 1px);
+  width: calc(100% / var(--lane-count) - 2px);
   padding: 3px 2px;
   border-left-width: 2px;
   border-radius: 4px;
@@ -886,8 +886,8 @@ select:focus-visible {
 .busy-block {
   position: absolute;
   z-index: 3;
-  left: 8px;
-  width: min(76%, 390px);
+  left: calc(var(--lane-index) * 100% / var(--lane-count) + 4px);
+  width: calc(100% / var(--lane-count) - 7px);
   min-height: 25px;
   padding: 7px 10px;
   border-left: 3px solid var(--block-color);
@@ -906,9 +906,6 @@ select:focus-visible {
 .busy-block:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
-.busy-block:nth-of-type(even) {
-  left: 20%;
 }
 .busy-block strong,
 .busy-block span {
@@ -1656,6 +1653,13 @@ select:focus-visible {
   font-size: 10px;
   line-height: 1.55;
 }
+.settings-list > .settings-logout,
+.settings-list > .settings-logout strong {
+  color: var(--red);
+}
+.settings-list > .settings-logout small {
+  color: var(--muted);
+}
 
 .day-agenda {
   margin-top: 14px;
@@ -1748,6 +1752,28 @@ select:focus-visible {
   place-items: center;
   color: var(--muted);
   background: var(--surface-muted);
+}
+
+.invite-confirmation {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 8px 0 2px;
+  text-align: center;
+}
+
+.invite-confirmation > div {
+  display: grid;
+  gap: 4px;
+}
+
+.invite-confirmation span,
+.invite-confirmation p {
+  color: var(--text-secondary);
+}
+
+.invite-confirmation .glass-button {
+  width: 100%;
 }
 .sheet-form {
   display: grid;
@@ -1982,11 +2008,19 @@ select:focus-visible {
   line-height: 1.5;
 }
 @keyframes payment-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 @keyframes payment-confirm {
-  from { transform: scale(0.75); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.75);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 .toast {
   position: fixed;
@@ -2597,9 +2631,6 @@ select:focus-visible {
   }
   .calendar-grid-wrap {
     height: 560px;
-  }
-  .busy-block {
-    width: 58%;
   }
 }
 

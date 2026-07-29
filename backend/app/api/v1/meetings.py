@@ -1,4 +1,5 @@
 from app.api.deps import get_redis
+from app.core.rate_limit import RateLimit, enforce_rate_limit
 from app.core.security import get_current_user
 from app.db.session import get_session
 from app.models.enums import ParticipantResponse
@@ -29,6 +30,7 @@ async def create_meeting(
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
 ) -> MeetingResponse:
+    await enforce_rate_limit(redis, f"rate:meeting-create:{current_user.id}", RateLimit(30, 3600))
     meeting = await MeetingService(session, redis).create(current_user, payload)
     return await serialize_meeting(meeting, current_user, session)
 
@@ -52,7 +54,7 @@ async def get_meeting(
 
     meeting = await MeetingRepository(session).get_for_user(meeting_id, current_user.id)
     if meeting is None:
-        raise AppError(404, "meeting_not_found", "Meeting not found")
+        raise AppError(404, "meeting_not_found", "Встреча не найдена")
     return await serialize_meeting(meeting, current_user, session)
 
 
@@ -63,6 +65,7 @@ async def accept_meeting(
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
 ) -> MeetingResponse:
+    await enforce_rate_limit(redis, f"rate:meeting-response:{current_user.id}", RateLimit(120, 3600))
     meeting = await MeetingService(session, redis).respond(current_user, meeting_id, ParticipantResponse.ACCEPTED)
     return await serialize_meeting(meeting, current_user, session)
 
@@ -74,6 +77,7 @@ async def decline_meeting(
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
 ) -> MeetingResponse:
+    await enforce_rate_limit(redis, f"rate:meeting-response:{current_user.id}", RateLimit(120, 3600))
     meeting = await MeetingService(session, redis).respond(current_user, meeting_id, ParticipantResponse.DECLINED)
     return await serialize_meeting(meeting, current_user, session)
 
@@ -85,5 +89,6 @@ async def cancel_meeting(
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
 ) -> MeetingResponse:
+    await enforce_rate_limit(redis, f"rate:meeting-response:{current_user.id}", RateLimit(120, 3600))
     meeting = await MeetingService(session, redis).cancel(current_user, meeting_id)
     return await serialize_meeting(meeting, current_user, session)

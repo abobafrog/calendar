@@ -20,7 +20,7 @@ Open:
 Required:
 
 ```env
-APP_SECRET_KEY=replace-with-at-least-32-random-characters
+APP_SECRET_KEY=development-only-not-for-production-change-this-64-characters-now
 DATABASE_URL=postgresql+asyncpg://timetogether:timetogether@postgres:5432/timetogether
 REDIS_URL=redis://redis:6379/0
 FRONTEND_URL=http://localhost:5173
@@ -28,7 +28,7 @@ ALLOWED_ORIGINS=http://localhost:5173
 VITE_API_URL=/api/v1
 ```
 
-The frontend Vite dev server proxies `/api` requests to the backend container.
+Docker Compose builds the frontend into static files served by unprivileged Nginx. Nginx proxies `/api` requests to the backend container; Vite is used only by `npm run dev` during local frontend development.
 
 ## Architecture
 
@@ -61,11 +61,15 @@ The web app supports:
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
 
-Email/password auth stores only a PBKDF2 password hash and issues a short-lived TimeTogether JWT.
+Password auth stores only a PBKDF2-SHA256 hash with a per-password random salt. After login, the backend issues a signed JWT session with an eight-hour maximum lifetime. The browser receives it in an `HttpOnly`, `SameSite=Strict` cookie (`Secure` in production), so frontend JavaScript cannot read or copy the token. Every private API request validates its signature, expiry, issuer, audience and session ID, then loads the user from the database. Logout revokes that session ID in Redis until expiry and removes the cookie. Telegram login validates fresh signed Mini App launch data before creating the same kind of session.
+
+The production container generates a persistent random signing key in the `backend_secrets` Docker volume. For a non-Docker deployment, generate `APP_SECRET_KEY` with `openssl rand -base64 48`; changing it signs every user out.
+
+Authentication endpoints and high-volume write/search operations are rate-limited in Redis. Browser writes also validate the `Origin` header, request bodies are capped at 1 MiB, and production responses include defensive security headers.
 
 ## Deployment Notes
 
-For Caddy on a single domain:
+For Caddy on a single domain (both published ports are loopback-only):
 
 ```caddyfile
 froklalol.ru {
@@ -95,7 +99,11 @@ docker compose exec backend python -m app.db.seed
 ## Privacy Rules
 
 - A user sees full details of their own intervals.
-- Friends see only open busy intervals after an accepted friendship; closed intervals are visible only to their owner.
-- Private friend intervals expose only busy status.
-- Hidden intervals are used for availability calculations but not shown as details.
+- Accepted friends see the title and short summary only when an interval is marked as visible to friends.
+- A private interval still occupies its time range, but friends receive only the status `Busy`, without its title.
+- Non-friends cannot request a calendar at all; interval IDs are also checked against their owner before edits or deletion.
 - Calendar and meeting endpoints run backend permission checks; frontend state is not trusted.
+
+## Demo Payment
+
+The 99 ₽ payment sheet is intentionally a UI simulation. It offers VISA, SBP and Mir Pay, shows four delayed processing messages, and creates the calendar interval only after the simulated confirmation. It does not collect card data, contact a payment provider or charge money; a real launch needs a server-side payment provider and webhook verification.

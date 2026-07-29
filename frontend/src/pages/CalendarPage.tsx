@@ -64,12 +64,12 @@ export function CalendarPage() {
     <div className="page calendar-page">
       <header className="page-header page-header--calendar">
         <div>
-          <span className="eyebrow">TimeTogether</span>
+          <span className="eyebrow">Время вместе</span>
           <h1>Календарь</h1>
         </div>
         <GlassButton
           variant="icon"
-          aria-label={allFriendsSelected ? 'Скрыть друзей' : 'Показать всех друзей'}
+          aria-label={allFriendsSelected ? 'Скрыть друнов' : 'Показать всех друнов'}
           onClick={() => {
             setSelected(allFriendsSelected ? [] : availableFriends.map((friend) => friend.id))
           }}
@@ -153,7 +153,7 @@ export function CalendarPage() {
             <div className="section-heading">
               <div>
                 <span>Наложение</span>
-                <h2>Графики друзей</h2>
+                <h2>Графики друнов</h2>
               </div>
               <span className="selection-count">{selected.length || 'Нет'}</span>
             </div>
@@ -403,7 +403,7 @@ function IntervalSummary({
   const isOwn = interval.user_id === currentUser.id
   const friend = friends.find((item) => item.id === interval.user_id)
   const owner = isOwn ? currentUser : friend
-  const ownerName = isOwn ? 'Вы' : friend?.alias || friend?.first_name || 'Друг'
+  const ownerName = isOwn ? 'Вы' : friend?.alias || friend?.first_name || 'Друн'
 
   return (
     <ModalSheet open title={interval.title ?? 'Занят'} onClose={onClose}>
@@ -436,7 +436,7 @@ function IntervalSummary({
           {!isOwn && !interval.title && (
             <div>
               <dt>Детали</dt>
-              <dd>Друг скрыл название дела</dd>
+              <dd>Друн скрыл название дела</dd>
             </div>
           )}
         </dl>

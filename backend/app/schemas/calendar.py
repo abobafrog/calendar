@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pydantic import Field, model_validator
 
@@ -18,7 +18,9 @@ class BusyIntervalCreate(DateRangeMixin):
     @model_validator(mode="after")
     def valid_range(self) -> "BusyIntervalCreate":
         if self.start_at >= self.end_at:
-            raise ValueError("start_at must be earlier than end_at")
+            raise ValueError("Начало должно быть раньше конца")
+        if self.end_at - self.start_at > timedelta(days=31):
+            raise ValueError("Дело не может длиться больше 31 дня")
         return self
 
 

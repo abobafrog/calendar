@@ -39,7 +39,7 @@ class NotificationService:
     async def mark_read(self, notification_id: int, user_id: int) -> Notification:
         notification = await NotificationRepository(self.session).get_owned(notification_id, user_id)
         if notification is None:
-            raise AppError(404, "notification_not_found", "Notification was not found")
+            raise AppError(404, "notification_not_found", "Уведомление не найдено")
         notification.read_at = notification.read_at or datetime.now(UTC)
         await self.session.commit()
         await self.session.refresh(notification)

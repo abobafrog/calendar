@@ -35,10 +35,10 @@ class MeetingService:
         participant_ids = sorted(set(data.participant_ids) | {actor.id})
         users = await self.users.get_many(participant_ids)
         if len(users) != len(participant_ids):
-            raise AppError(404, "participant_not_found", "One or more participants do not exist")
+            raise AppError(404, "participant_not_found", "Один или несколько участников не найдены")
         for participant_id in participant_ids:
             if participant_id != actor.id and not await self.friendships.is_friend(actor.id, participant_id):
-                raise AppError(403, "participant_not_friend", "Meeting participants must be friends")
+                raise AppError(403, "participant_not_friend", "Участниками встречи могут быть только друны")
 
         meeting = MeetingProposal(
             creator_id=actor.id,
@@ -66,12 +66,12 @@ class MeetingService:
     async def respond(self, actor: User, meeting_id: int, response: ParticipantResponse) -> MeetingProposal:
         meeting = await self.meetings.get_for_user(meeting_id, actor.id, for_update=True)
         if meeting is None:
-            raise AppError(404, "meeting_not_found", "Meeting not found")
+            raise AppError(404, "meeting_not_found", "Встреча не найдена")
         if meeting.status != MeetingStatus.PENDING:
-            raise AppError(409, "meeting_not_pending", "Meeting is no longer pending")
+            raise AppError(409, "meeting_not_pending", "Эта встреча больше не ожидает ответа")
         participant = await self.meetings.get_participant(meeting_id, actor.id, for_update=True)
         if participant is None:
-            raise AppError(404, "meeting_not_found", "Meeting not found")
+            raise AppError(404, "meeting_not_found", "Встреча не найдена")
 
         if response == ParticipantResponse.ACCEPTED and await self.calendar.has_conflict(
             actor.id, meeting.start_at, meeting.end_at, meeting.id
@@ -79,7 +79,7 @@ class MeetingService:
             raise AppError(
                 409,
                 "meeting_conflict",
-                "Your calendar now conflicts with this meeting proposal",
+                "В вашем календаре появилось пересечение с этой встречей",
             )
         participant.response = response
         participant.responded_at = datetime.now(UTC)
@@ -106,7 +106,7 @@ class MeetingService:
             raise AppError(
                 409,
                 "meeting_conflict",
-                "The meeting cannot be confirmed because a participant became busy",
+                "Встречу нельзя подтвердить: один из участников теперь занят",
                 {"participant_ids": conflicts},
             )
         meeting.status = MeetingStatus.CONFIRMED
@@ -126,10 +126,10 @@ class MeetingService:
     async def cancel(self, actor: User, meeting_id: int) -> MeetingProposal:
         meeting = await self.meetings.get_for_user(meeting_id, actor.id, for_update=True)
         if meeting is None:
-            raise AppError(404, "meeting_not_found", "Meeting not found")
+            raise AppError(404, "meeting_not_found", "Встреча не найдена")
         PermissionService.require_meeting_creator(actor, meeting)
         if meeting.status == MeetingStatus.CANCELLED:
-            raise AppError(409, "meeting_cancelled", "Meeting is already cancelled")
+            raise AppError(409, "meeting_cancelled", "Встреча уже отменена")
         meeting.status = MeetingStatus.CANCELLED
         await self.calendar.delete_for_meeting(meeting.id)
         for participant in meeting.participants:

@@ -44,9 +44,11 @@ export function MeetingsPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <div><Clock3 size={26} /></div>
+            <div>
+              <Clock3 size={26} />
+            </div>
             <h2>Встреч пока нет</h2>
-            <p>Предложите встречу принятому другу.</p>
+            <p>Предложите встречу принятому друну.</p>
           </div>
         )
       ) : (

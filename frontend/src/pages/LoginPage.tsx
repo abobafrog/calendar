@@ -12,25 +12,10 @@ import {
 } from 'lucide-react'
 import { apiRequest } from '../api/client'
 import { ThemeBackground } from '../components/ThemeBackground'
+import { timezoneOptionsWithCurrent } from '../lib/timezones'
 import type { AuthResponse } from '../lib/types'
 
 type AuthMode = 'login' | 'register'
-const TIMEZONE_OPTIONS = [
-  'UTC',
-  'Europe/Moscow',
-  'Europe/Kaliningrad',
-  'Europe/Amsterdam',
-  'Europe/Berlin',
-  'Europe/London',
-  'Asia/Tbilisi',
-  'Asia/Dubai',
-  'Asia/Almaty',
-  'Asia/Yekaterinburg',
-  'Asia/Novosibirsk',
-  'America/New_York',
-  'America/Chicago',
-  'America/Los_Angeles',
-]
 
 type PreviewBlockStyle = CSSProperties & {
   '--top': string
@@ -59,8 +44,8 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
   const subtitle = useMemo(
     () =>
       mode === 'login'
-        ? 'Продолжайте планировать общее время с друзьями.'
-        : 'Нужны только имя, username и пароль. Друзья увидят календарь после взаимной связи.',
+        ? 'Продолжайте планировать общее время с друнами.'
+        : 'Нужны только имя, логин и пароль. Друны увидят календарь после взаимной связи.',
     [mode],
   )
 
@@ -100,14 +85,14 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       <div className="login-background" aria-hidden="true">
         <ThemeBackground />
       </div>
-      <section className="public-hero" aria-label="О проекте TimeTogether">
+      <section className="public-hero" aria-label="О проекте «Время вместе»">
         <div className="login-hero__badge">
           <CalendarDays size={22} />
-          <span>TimeTogether</span>
+          <span>Время вместе</span>
         </div>
         <h1>Общий календарь для встреч без переписок на весь день</h1>
         <p>
-          TimeTogether помогает друзьям и небольшим командам видеть только взаимную занятость,
+          «Время вместе» помогает друнам и небольшим командам видеть только взаимную занятость,
           находить общие свободные окна и договариваться о встречах без раскрытия личных деталей.
         </p>
         <div className="public-hero__actions">
@@ -127,7 +112,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <span>
             <UsersRound size={20} />
           </span>
-          <h2>Только принятые друзья</h2>
+          <h2>Только принятые друны</h2>
           <p>
             Календарь и связи закрыты от посторонних. Доступ появляется только после взаимного
             принятия.
@@ -149,7 +134,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           </span>
           <h2>Приватность событий</h2>
           <p>
-            Для личной занятости можно показывать друзьям только статус «занят», без названия и
+            Для личной занятости можно показывать друнам только статус «занят», без названия и
             деталей.
           </p>
         </article>
@@ -194,8 +179,8 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <Clock3 size={26} />
           <h2>Сначала отметьте занятость, затем приглашайте людей</h2>
           <p>
-            Для MVP доступны регистрация, друзья, личные интервалы, общий поиск времени, предложения
-            встреч и настройки профиля.
+            В тестовой версии доступны регистрация, друны, личные интервалы, общий поиск времени,
+            предложения встреч и настройки профиля.
           </p>
         </div>
       </section>
@@ -247,9 +232,9 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               <label>
                 Часовой пояс
                 <select value={timezone} onChange={(event) => setTimezone(event.target.value)}>
-                  {TIMEZONE_OPTIONS.map((zone) => (
-                    <option key={zone} value={zone}>
-                      {zone}
+                  {timezoneOptionsWithCurrent(timezone).map((zone) => (
+                    <option key={zone.value} value={zone.value}>
+                      {zone.label}
                     </option>
                   ))}
                 </select>
@@ -257,7 +242,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             </>
           )}
           <label>
-            Username
+            Логин
             <input
               autoCapitalize="none"
               autoComplete="username"
@@ -278,14 +263,14 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               placeholder="••••••••"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              minLength={mode === 'register' ? 8 : 1}
+              minLength={mode === 'register' ? 12 : 1}
               required
             />
           </label>
 
           {mode === 'register' && (
             <p className="auth-hint">
-              Примеры: имя «Тимофей», фамилия «Иванов», username «tima_schedule».
+              Примеры: имя «Тимофей», фамилия «Иванов», логин «tima_schedule».
             </p>
           )}
 

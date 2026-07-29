@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { apiRequest, hasAccessToken } from './client'
+import { apiRequest } from './client'
 import type {
   BusyInterval,
   Friend,
@@ -13,7 +13,6 @@ import type {
 
 export function useCurrentUser() {
   return useQuery({
-    enabled: hasAccessToken(),
     queryKey: ['me'],
     queryFn: () => apiRequest<User>('/users/me'),
   })
@@ -66,6 +65,15 @@ export function useCreateFriendRequest() {
         method: 'POST',
         body: JSON.stringify(payload),
       }),
+  })
+}
+
+export function useFriendInvitePreview(inviteCode: string) {
+  return useQuery({
+    enabled: inviteCode.length >= 8,
+    queryKey: ['friend-invite', inviteCode],
+    queryFn: () => apiRequest<User>(`/friend-invites/${encodeURIComponent(inviteCode)}`),
+    retry: false,
   })
 }
 

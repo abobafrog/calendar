@@ -6,15 +6,39 @@ import { ModalSheet } from './ModalSheet'
 type PaymentMethod = 'visa' | 'sbp' | 'mir-pay'
 type PaymentStatus = 'choice' | 'processing' | 'success'
 
+const progressMessages = [
+  {
+    title: 'Готовим безопасную оплату',
+    description: 'Проверяем выбранный способ и данные заказа.',
+  },
+  {
+    title: 'Связываемся с банком',
+    description: 'Ждём подтверждение демонстрационной операции.',
+  },
+  {
+    title: 'Закрепляем выбранное время',
+    description: 'Сохраняем дела и проверяем календарь.',
+  },
+  {
+    title: 'Ещё чуть-чуть — календарь будет готов',
+    description: 'Подтверждаем оплату сервиса и завершаем настройку.',
+  },
+]
+
 const methods: Array<{
   id: PaymentMethod
   title: string
   description: string
   icon: typeof CreditCard
 }> = [
-  { id: 'visa', title: 'VISA •••• 4242', description: 'Привязанная карта', icon: CreditCard },
+  {
+    id: 'visa',
+    title: 'Карта «Виза» •••• 4242',
+    description: 'Привязанная карта',
+    icon: CreditCard,
+  },
   { id: 'sbp', title: 'СБП', description: 'Оплата по номеру телефона', icon: Landmark },
-  { id: 'mir-pay', title: 'Mir Pay', description: 'Оплата одним касанием', icon: Radio },
+  { id: 'mir-pay', title: 'Мир Пэй', description: 'Оплата одним касанием', icon: Radio },
 ]
 
 const delay = (milliseconds: number) =>
@@ -33,19 +57,26 @@ export function PaymentSheet({
 }) {
   const [method, setMethod] = useState<PaymentMethod>('visa')
   const [status, setStatus] = useState<PaymentStatus>('choice')
+  const [progressIndex, setProgressIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
 
   const close = () => {
     if (status === 'processing') return
     setStatus('choice')
+    setProgressIndex(0)
     setError(null)
     onClose()
   }
 
   const pay = async () => {
     setStatus('processing')
+    setProgressIndex(0)
     setError(null)
-    await delay(1_500)
+    for (let index = 1; index < progressMessages.length; index += 1) {
+      await delay(650)
+      setProgressIndex(index)
+    }
+    await delay(650)
     try {
       await onConfirmed()
       setStatus('success')
@@ -111,12 +142,12 @@ export function PaymentSheet({
             {status === 'success' ? <Check size={32} /> : <span />}
           </div>
           <h3>
-            {status === 'success' ? 'Оплата подтверждена' : 'Ещё чуть-чуть — календарь будет готов'}
+            {status === 'success' ? 'Оплата подтверждена' : progressMessages[progressIndex].title}
           </h3>
           <p>
             {status === 'success'
               ? 'Всё готово, открываем ваш календарь.'
-              : 'Подтверждаем оплату сервиса и сохраняем выбранное время.'}
+              : progressMessages[progressIndex].description}
           </p>
         </div>
       )}

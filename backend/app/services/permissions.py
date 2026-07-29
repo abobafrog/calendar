@@ -15,14 +15,14 @@ class PermissionService:
         if actor_id == owner_id:
             return
         if not await self.friendships.is_friend(actor_id, owner_id):
-            raise AppError(403, "calendar_access_denied", "Calendar access requires friendship")
+            raise AppError(403, "calendar_access_denied", "Календарь доступен только друнам")
 
     @staticmethod
     def require_interval_owner(actor: User, interval: BusyInterval) -> None:
         if interval.user_id != actor.id:
-            raise AppError(404, "interval_not_found", "Calendar interval not found")
+            raise AppError(404, "interval_not_found", "Дело в календаре не найдено")
 
     @staticmethod
     def require_meeting_creator(actor: User, meeting: MeetingProposal) -> None:
         if meeting.creator_id != actor.id:
-            raise AppError(403, "meeting_owner_required", "Only the meeting creator can do this")
+            raise AppError(403, "meeting_owner_required", "Это действие доступно только организатору встречи")

@@ -1,5 +1,5 @@
 import { init, miniApp, retrieveRawInitData, themeParams, viewport } from '@tma.js/sdk-react'
-import { apiRequest, setAccessToken } from '../api/client'
+import { apiRequest } from '../api/client'
 
 let initializationPromise: Promise<boolean> | null = null
 
@@ -25,11 +25,10 @@ async function initializeTelegramOnce() {
   if (!initData) return false
 
   try {
-    const auth = await apiRequest<{ access_token: string }>('/auth/telegram', {
+    await apiRequest('/auth/telegram', {
       method: 'POST',
       body: JSON.stringify({ init_data: initData }),
     })
-    setAccessToken(auth.access_token)
   } catch {
     return false
   }

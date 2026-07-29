@@ -8,6 +8,8 @@ export function BusyBlock({
   color,
   compact = false,
   timeFormat = '24h',
+  lane = 0,
+  laneCount = 1,
   onClick,
 }: {
   interval: BusyInterval
@@ -16,6 +18,8 @@ export function BusyBlock({
   color: string
   compact?: boolean
   timeFormat?: TimeFormat
+  lane?: number
+  laneCount?: number
   onClick?: (interval: BusyInterval) => void
 }) {
   const time = `${formatTimeInZone(interval.start_at, undefined, timeFormat)}–${formatTimeInZone(
@@ -28,7 +32,13 @@ export function BusyBlock({
       type="button"
       className={`busy-block ${compact ? 'is-compact' : ''}`}
       style={
-        { top: `${top}%`, height: `${height}%`, '--block-color': color } as React.CSSProperties
+        {
+          top: `${top}%`,
+          height: `${height}%`,
+          '--block-color': color,
+          '--lane-index': lane,
+          '--lane-count': laneCount,
+        } as React.CSSProperties
       }
       onClick={() => onClick?.(interval)}
     >

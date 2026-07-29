@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,7 +42,7 @@ class CalendarService:
     async def get(self, actor: User, interval_id: int) -> BusyInterval:
         interval = await self.repository.get_by_id(interval_id)
         if interval is None:
-            raise AppError(404, "interval_not_found", "Calendar interval not found")
+            raise AppError(404, "interval_not_found", "Дело в календаре не найдено")
         self.permissions.require_interval_owner(actor, interval)
         return interval
 
@@ -57,14 +57,16 @@ class CalendarService:
     async def update(self, actor: User, interval_id: int, data: BusyIntervalUpdate) -> BusyInterval:
         current = await self.repository.get_by_id(interval_id, for_update=True)
         if current is None:
-            raise AppError(404, "interval_not_found", "Calendar interval not found")
+            raise AppError(404, "interval_not_found", "Дело в календаре не найдено")
         self.permissions.require_interval_owner(actor, current)
         if current.meeting_id is not None:
-            raise AppError(409, "meeting_interval", "Meeting intervals are managed by the meeting")
+            raise AppError(409, "meeting_interval", "Время встречи изменяется на странице встречи")
         start_at = data.start_at or current.start_at
         end_at = data.end_at or current.end_at
         if start_at.tzinfo is None or end_at.tzinfo is None or start_at >= end_at:
-            raise AppError(422, "invalid_interval", "A timezone-aware valid interval is required")
+            raise AppError(422, "invalid_interval", "Укажите правильный период и часовой пояс")
+        if end_at - start_at > timedelta(days=31):
+            raise AppError(422, "interval_too_long", "Дело не может длиться больше 31 дня")
         current.start_at = start_at
         current.end_at = end_at
         if "title" in data.model_fields_set:
@@ -86,10 +88,10 @@ class CalendarService:
     async def delete(self, actor: User, interval_id: int) -> None:
         interval = await self.repository.get_by_id(interval_id, for_update=True)
         if interval is None:
-            raise AppError(404, "interval_not_found", "Calendar interval not found")
+            raise AppError(404, "interval_not_found", "Дело в календаре не найдено")
         self.permissions.require_interval_owner(actor, interval)
         if interval.meeting_id is not None:
-            raise AppError(409, "meeting_interval", "Cancel the meeting to remove this interval")
+            raise AppError(409, "meeting_interval", "Чтобы удалить это время, отмените встречу")
         await self.session.delete(interval)
         await self.session.commit()
 

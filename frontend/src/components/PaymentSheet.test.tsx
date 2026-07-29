@@ -5,7 +5,7 @@ import { PaymentSheet } from './PaymentSheet'
 describe('PaymentSheet', () => {
   afterEach(() => vi.useRealTimers())
 
-  it('selects VISA by default and proceeds only after confirmation', async () => {
+  it('выбирает карту по умолчанию и продолжает только после подтверждения', async () => {
     vi.useFakeTimers()
     const onConfirmed = vi.fn().mockResolvedValue(undefined)
     const onSuccess = vi.fn()
@@ -19,16 +19,24 @@ describe('PaymentSheet', () => {
       />,
     )
 
-    expect(screen.getByRole('radio', { name: /VISA •••• 4242/ })).toHaveAttribute(
+    expect(screen.getByRole('radio', { name: /Карта «Виза» •••• 4242/ })).toHaveAttribute(
       'aria-checked',
       'true',
     )
     fireEvent.click(screen.getByRole('button', { name: 'Оплатить 99 ₽' }))
-    expect(screen.getByText('Ещё чуть-чуть — календарь будет готов')).toBeInTheDocument()
+    expect(screen.getByText('Готовим безопасную оплату')).toBeInTheDocument()
     expect(onConfirmed).not.toHaveBeenCalled()
     expect(onSuccess).not.toHaveBeenCalled()
 
-    await act(async () => vi.advanceTimersByTime(1_500))
+    await act(async () => vi.advanceTimersByTime(650))
+    expect(screen.getByText('Связываемся с банком')).toBeInTheDocument()
+    await act(async () => vi.advanceTimersByTime(650))
+    expect(screen.getByText('Закрепляем выбранное время')).toBeInTheDocument()
+    await act(async () => vi.advanceTimersByTime(650))
+    expect(screen.getByText('Ещё чуть-чуть — календарь будет готов')).toBeInTheDocument()
+    expect(onConfirmed).not.toHaveBeenCalled()
+
+    await act(async () => vi.advanceTimersByTime(650))
     expect(onConfirmed).toHaveBeenCalledOnce()
     expect(screen.getByText('Оплата подтверждена')).toBeInTheDocument()
     expect(onSuccess).not.toHaveBeenCalled()

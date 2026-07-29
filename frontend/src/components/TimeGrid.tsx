@@ -1,5 +1,6 @@
 import type { BusyInterval } from '../lib/types'
 import { colorForUser } from '../lib/colors'
+import { layoutOverlappingIntervals } from '../lib/calendarLayout'
 import { formatLocalClockTime, type TimeFormat } from '../lib/time'
 import { BusyBlock } from './BusyBlock'
 import { FreeSlot } from './FreeSlot'
@@ -7,6 +8,14 @@ import { FreeSlot } from './FreeSlot'
 const START_HOUR = 8
 const END_HOUR = 20
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, index) => START_HOUR + index)
+
+function visibleRange(day: Date) {
+  const start = new Date(day)
+  start.setHours(START_HOUR, 0, 0, 0)
+  const end = new Date(day)
+  end.setHours(END_HOUR, 0, 0, 0)
+  return { start, end }
+}
 
 function percent(date: Date) {
   return (
@@ -58,9 +67,8 @@ export function TimeGrid({
         <div className="time-grid__labels">{timeLabels(timeFormat)}</div>
         <div className="time-grid__week-canvas">
           {days.map((day) => {
-            const dayIntervals = intervals.filter(
-              (item) => new Date(item.start_at).toDateString() === day.toDateString(),
-            )
+            const range = visibleRange(day)
+            const dayIntervals = layoutOverlappingIntervals(intervals, range.start, range.end)
             return (
               <div className="week-column" key={day.toISOString()}>
                 <header>
@@ -69,9 +77,9 @@ export function TimeGrid({
                 </header>
                 <div className="week-column__body">
                   {gridLines()}
-                  {dayIntervals.map((interval) => {
-                    const top = Math.max(0, percent(new Date(interval.start_at)))
-                    const bottom = Math.min(100, percent(new Date(interval.end_at)))
+                  {dayIntervals.map(({ interval, startAt, endAt, lane, laneCount }) => {
+                    const top = percent(startAt)
+                    const bottom = percent(endAt)
                     return (
                       <BusyBlock
                         key={interval.id}
@@ -81,6 +89,8 @@ export function TimeGrid({
                         color={colorForUser(interval.user_id)}
                         timeFormat={timeFormat}
                         compact
+                        lane={lane}
+                        laneCount={laneCount}
                         onClick={onSelectInterval}
                       />
                     )
@@ -93,18 +103,17 @@ export function TimeGrid({
       </div>
     )
   }
-  const sameDay = intervals.filter(
-    (item) => new Date(item.start_at).toDateString() === date.toDateString(),
-  )
+  const range = visibleRange(date)
+  const sameDay = layoutOverlappingIntervals(intervals, range.start, range.end)
   return (
     <div className="time-grid" aria-label="Календарная сетка">
       <div className="time-grid__labels">{timeLabels(timeFormat)}</div>
       <div className="time-grid__canvas">
         {gridLines()}
         {showFree && <FreeSlot top={46} height={12} />}
-        {sameDay.map((interval) => {
-          const top = Math.max(0, percent(new Date(interval.start_at)))
-          const bottom = Math.min(100, percent(new Date(interval.end_at)))
+        {sameDay.map(({ interval, startAt, endAt, lane, laneCount }) => {
+          const top = percent(startAt)
+          const bottom = percent(endAt)
           return (
             <BusyBlock
               key={interval.id}
@@ -114,6 +123,8 @@ export function TimeGrid({
               color={colorForUser(interval.user_id)}
               timeFormat={timeFormat}
               compact={bottom - top < 8}
+              lane={lane}
+              laneCount={laneCount}
               onClick={onSelectInterval}
             />
           )

@@ -25,15 +25,15 @@ class AvailabilitySearchRequest(APIModel):
     @classmethod
     def valid_weekdays(cls, value: set[int]) -> set[int]:
         if not value or any(day < 1 or day > 7 for day in value):
-            raise ValueError("weekdays must contain ISO weekday values 1 through 7")
+            raise ValueError("Дни недели должны быть числами от 1 до 7")
         return value
 
     @model_validator(mode="after")
     def valid_search(self) -> "AvailabilitySearchRequest":
         if self.date_from > self.date_to:
-            raise ValueError("date_from must not be after date_to")
+            raise ValueError("Начальная дата не может быть позже конечной")
         if self.daily_start >= self.daily_end:
-            raise ValueError("daily_start must be earlier than daily_end")
+            raise ValueError("Начало дня должно быть раньше конца")
         return self
 
 
