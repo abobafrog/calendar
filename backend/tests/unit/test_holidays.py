@@ -1,5 +1,5 @@
 import app.services.holidays as holidays
-from app.services.holidays import classify_holiday, parse_holidays
+from app.services.holidays import _filter_titles, classify_holiday, parse_holidays
 
 
 def test_parses_only_holidays_from_daily_block() -> None:
@@ -25,3 +25,13 @@ def test_does_not_repeat_same_holiday_twice(monkeypatch) -> None:
 
     assert first == "Первый"
     assert second == "Второй"
+
+
+def test_filters_disabled_holiday_categories() -> None:
+    titles = [
+        "Всемирный день улыбки",
+        "Международный день дружбы",
+        "Праздник иконы Божией Матери",
+    ]
+
+    assert _filter_titles(titles, {"Всемирный", "Международный"}) == titles[:2]

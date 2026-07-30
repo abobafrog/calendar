@@ -64,12 +64,22 @@ async def _load_source(client: httpx.AsyncClient, url: str) -> list[str]:
     return parse_holidays(response.text)
 
 
-async def get_random_holiday(today: date) -> HolidayResponse | None:
+def _filter_titles(titles: list[str], allowed_categories: set[str]) -> list[str]:
+    return [title for title in titles if classify_holiday(title) in allowed_categories]
+
+
+async def get_random_holiday(today: date, allowed_categories: list[str]) -> HolidayResponse | None:
     global _cache
+    allowed = set(allowed_categories)
+    if not allowed:
+        return None
     if _cache is not None:
         cached_date, cached_at, cached_titles, cached_source = _cache
         if cached_date == today and time.monotonic() - cached_at < 900:
-            title = _choose_title(cached_titles)
+            eligible_titles = _filter_titles(cached_titles, allowed)
+            if not eligible_titles:
+                return None
+            title = _choose_title(eligible_titles)
             return HolidayResponse(
                 title=title,
                 category=classify_holiday(title),
@@ -85,7 +95,10 @@ async def get_random_holiday(today: date) -> HolidayResponse | None:
                 continue
             if titles:
                 _cache = (today, time.monotonic(), titles, source)
-                title = _choose_title(titles)
+                eligible_titles = _filter_titles(titles, allowed)
+                if not eligible_titles:
+                    return None
+                title = _choose_title(eligible_titles)
                 return HolidayResponse(
                     title=title,
                     category=classify_holiday(title),

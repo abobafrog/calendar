@@ -1729,6 +1729,22 @@ select:focus-visible {
   font-size: 10px;
   line-height: 1.55;
 }
+.holiday-settings-list .toggle-row {
+  padding-inline: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.holiday-settings-list .toggle-row:last-child {
+  border-bottom: 0;
+}
+.holiday-settings-list input:disabled + i {
+  opacity: 0.55;
+}
+.holiday-settings-hint {
+  margin: 9px 4px 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
 .settings-list > .settings-logout,
 .settings-list > .settings-logout strong {
   color: var(--red);

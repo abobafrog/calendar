@@ -13,8 +13,8 @@ router = APIRouter(prefix="/holidays", tags=["holidays"])
 @router.get("/today", response_model=HolidayResponse | None)
 async def today_holiday(
     response: Response,
-    _current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> HolidayResponse | None:
     response.headers["Cache-Control"] = "no-store"
     today = datetime.now(ZoneInfo("Europe/Moscow")).date()
-    return await get_random_holiday(today)
+    return await get_random_holiday(today, current_user.holiday_categories)

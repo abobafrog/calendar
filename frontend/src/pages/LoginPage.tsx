@@ -6,6 +6,7 @@ import {
   Clock3,
   LockKeyhole,
   LogIn,
+  PartyPopper,
   SearchCheck,
   UserPlus,
   UsersRound,
@@ -138,6 +139,16 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             деталей.
           </p>
         </article>
+        <article>
+          <span>
+            <PartyPopper size={20} />
+          </span>
+          <h2>Праздники и открытки</h2>
+          <p>
+            Календарь отмечает праздник дня и открывает поздравительную карточку. В профиле можно
+            выбрать категории или полностью скрыть праздники.
+          </p>
+        </article>
       </section>
 
       <section className="public-preview" aria-label="Как выглядит планирование">
@@ -179,8 +190,8 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <Clock3 size={26} />
           <h2>Сначала отметьте занятость, затем приглашайте людей</h2>
           <p>
-            В тестовой версии доступны регистрация, друны, личные интервалы, общий поиск времени,
-            предложения встреч и настройки профиля.
+            Доступны регистрация, друны, личные интервалы, общий поиск времени, предложения встреч,
+            праздники с открытками и гибкие настройки профиля.
           </p>
         </div>
       </section>

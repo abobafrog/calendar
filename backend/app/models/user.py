@@ -2,6 +2,7 @@ from datetime import time
 from typing import TYPE_CHECKING
 
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, Enum, String, Time
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -38,6 +39,11 @@ class User(TimestampMixin, Base):
     workday_start: Mapped[time] = mapped_column(Time, default=time(9), server_default="09:00:00")
     workday_end: Mapped[time] = mapped_column(Time, default=time(18), server_default="18:00:00")
     notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    holiday_categories: Mapped[list[str]] = mapped_column(
+        JSONB,
+        default=lambda: ["Всемирный", "Международный", "Национальный", "Религиозный", "Необычный"],
+        server_default='["Всемирный", "Международный", "Национальный", "Религиозный", "Необычный"]',
+    )
 
     requested_friendships: Mapped[list["Friendship"]] = relationship(
         foreign_keys="Friendship.requester_id", back_populates="requester"

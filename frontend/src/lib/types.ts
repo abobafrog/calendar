@@ -2,6 +2,8 @@ export type ThemeMode = 'light' | 'dark' | 'contrast'
 export type Visibility = 'open' | 'closed'
 export type MeetingStatus = 'pending' | 'confirmed' | 'cancelled'
 export type ResponseStatus = 'pending' | 'accepted' | 'declined'
+export type HolidayCategory =
+  'Всемирный' | 'Международный' | 'Национальный' | 'Религиозный' | 'Необычный'
 
 export interface User {
   id: number
@@ -17,6 +19,7 @@ export interface User {
   workday_start?: string
   workday_end?: string
   notifications_enabled?: boolean
+  holiday_categories?: HolidayCategory[]
 }
 
 export interface BusyInterval {
@@ -43,7 +46,7 @@ export interface FriendRequest {
 
 export interface Holiday {
   title: string
-  category: string
+  category: HolidayCategory
   date: string
   source_url: string
 }

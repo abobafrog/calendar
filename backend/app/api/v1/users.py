@@ -64,6 +64,7 @@ async def update_me(
         "workday_start",
         "workday_end",
         "notifications_enabled",
+        "holiday_categories",
     }
     repository = UserRepository(session)
     if "username" in payload.model_fields_set and payload.username is None:
@@ -72,6 +73,8 @@ async def update_me(
         payload.username, exclude_user_id=current_user.id
     ):
         raise AppError(409, "username_already_taken", "Этот логин уже занят")
+    if "holiday_categories" in payload.model_fields_set and payload.holiday_categories is None:
+        raise AppError(422, "invalid_holiday_categories", "Нужно передать список категорий праздников")
     for field_name in payload.model_fields_set & allowed_fields:
         value = getattr(payload, field_name)
         if field_name == "username" and isinstance(value, str):

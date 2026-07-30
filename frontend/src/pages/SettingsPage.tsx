@@ -4,12 +4,16 @@ import {
   Clock3,
   Copy,
   Edit2,
+  Flag,
   Globe2,
+  Heart,
   LogOut,
   Moon,
   ShieldCheck,
+  Sparkles,
   Sun,
   SunMoon,
+  UsersRound,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -22,13 +26,51 @@ import { useTheme } from '../hooks/useTheme'
 import { useCurrentUser, useUpdateCurrentUser } from '../api/hooks'
 import { formatLocalClockTime } from '../lib/time'
 import { timezoneLabel, timezoneOptionsWithCurrent } from '../lib/timezones'
-import type { ThemeMode, User } from '../lib/types'
+import type { HolidayCategory, ThemeMode, User } from '../lib/types'
 import { signOut } from '../api/client'
 
 const themes: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: 'light', label: 'Светлая', icon: Sun },
   { value: 'dark', label: 'Тёмная', icon: Moon },
   { value: 'contrast', label: 'Контраст', icon: ShieldCheck },
+]
+
+const holidayCategories: {
+  value: HolidayCategory
+  label: string
+  description: string
+  icon: typeof Sun
+}[] = [
+  {
+    value: 'Всемирный',
+    label: 'Всемирные',
+    description: 'События мирового масштаба',
+    icon: Globe2,
+  },
+  {
+    value: 'Международный',
+    label: 'Международные',
+    description: 'Общие даты разных стран',
+    icon: UsersRound,
+  },
+  {
+    value: 'Национальный',
+    label: 'Национальные',
+    description: 'Праздники отдельных стран',
+    icon: Flag,
+  },
+  {
+    value: 'Религиозный',
+    label: 'Религиозные',
+    description: 'Памятные даты и дни святых',
+    icon: Heart,
+  },
+  {
+    value: 'Необычный',
+    label: 'Необычные',
+    description: 'Тематические и добрые поводы',
+    icon: Sparkles,
+  },
 ]
 
 export function SettingsPage() {
@@ -55,6 +97,20 @@ export function SettingsPage() {
       }
     }
     await saveUser({ notifications_enabled: enabled }, message)
+  }
+  const setHolidayCategoryEnabled = async (category: HolidayCategory, enabled: boolean) => {
+    const current = currentUser.holiday_categories ?? holidayCategories.map((item) => item.value)
+    const next = enabled
+      ? [...current.filter((item) => item !== category), category]
+      : current.filter((item) => item !== category)
+    try {
+      const updated = await updateUser.mutateAsync({ holiday_categories: next })
+      queryClient.setQueryData(['me'], updated)
+      await queryClient.invalidateQueries({ queryKey: ['holidays'] })
+      setToast('Настройки праздников сохранены')
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : 'Не удалось сохранить настройки')
+    }
   }
   const workdayStart = (currentUser.workday_start ?? '09:00').slice(0, 5)
   const workdayEnd = (currentUser.workday_end ?? '18:00').slice(0, 5)
@@ -145,6 +201,34 @@ export function SettingsPage() {
             <ChevronRight size={18} />
           </button>
         </GlassPanel>
+      </section>
+      <section className="settings-section">
+        <h2>Праздники в календаре</h2>
+        <GlassPanel className="settings-list holiday-settings-list">
+          {holidayCategories.map(({ value, label, description, icon: Icon }) => (
+            <label className="toggle-row" key={value}>
+              <Icon size={19} />
+              <span>
+                <strong>{label}</strong>
+                <small>{description}</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={(
+                  currentUser.holiday_categories ?? holidayCategories.map((item) => item.value)
+                ).includes(value)}
+                disabled={updateUser.isPending}
+                onChange={(event) => {
+                  void setHolidayCategoryEnabled(value, event.target.checked)
+                }}
+              />
+              <i />
+            </label>
+          ))}
+        </GlassPanel>
+        <p className="holiday-settings-hint">
+          Если отключить все категории, праздники в календаре показываться не будут.
+        </p>
       </section>
       <section className="settings-section">
         <h2>Приватность</h2>

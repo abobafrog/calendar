@@ -1,9 +1,12 @@
 from datetime import datetime, time
+from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
 from app.models.enums import TimeFormat
 from app.schemas.common import APIModel, validate_timezone
+
+HolidayCategory = Literal["Всемирный", "Международный", "Национальный", "Религиозный", "Необычный"]
 
 
 class UserSummary(APIModel):
@@ -23,8 +26,16 @@ class UserResponse(UserSummary):
     workday_start: time
     workday_end: time
     notifications_enabled: bool
+    holiday_categories: list[HolidayCategory]
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("holiday_categories", mode="before")
+    @classmethod
+    def default_holiday_categories(cls, value: object) -> object:
+        if value is None:
+            return ["Всемирный", "Международный", "Национальный", "Религиозный", "Необычный"]
+        return value
 
 
 class UserUpdate(APIModel):
@@ -37,6 +48,14 @@ class UserUpdate(APIModel):
     workday_start: time | None = None
     workday_end: time | None = None
     notifications_enabled: bool | None = None
+    holiday_categories: list[HolidayCategory] | None = Field(default=None, max_length=5)
+
+    @field_validator("holiday_categories")
+    @classmethod
+    def unique_holiday_categories(cls, value: list[HolidayCategory] | None) -> list[HolidayCategory] | None:
+        if value is not None and len(value) != len(set(value)):
+            raise ValueError("Категории праздников не должны повторяться")
+        return value
 
     @field_validator("timezone")
     @classmethod
