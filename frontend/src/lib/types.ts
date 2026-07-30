@@ -41,6 +41,13 @@ export interface FriendRequest {
   user: User
 }
 
+export interface Holiday {
+  title: string
+  category: string
+  date: string
+  source_url: string
+}
+
 export interface UserCalendar {
   user: User
   intervals: BusyInterval[]

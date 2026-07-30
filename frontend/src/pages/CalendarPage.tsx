@@ -1,7 +1,13 @@
-import { Check, ListFilter, Pencil, Plus } from 'lucide-react'
+import { Check, ExternalLink, Gift, ListFilter, Pencil, Plus, Sparkles } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useCalendarRange, useCurrentUser, useFriendCalendarRange, useFriends } from '../api/hooks'
+import {
+  useCalendarRange,
+  useCurrentUser,
+  useFriendCalendarRange,
+  useFriends,
+  useTodayHoliday,
+} from '../api/hooks'
 import { DateSwitcher } from '../components/DateSwitcher'
 import { FriendSelector } from '../components/FriendSelector'
 import { GlassButton } from '../components/GlassButton'
@@ -11,7 +17,7 @@ import { TimeGrid } from '../components/TimeGrid'
 import { ModalSheet } from '../components/ModalSheet'
 import { colorForUser } from '../lib/colors'
 import { formatDateInZone, formatTimeInZone } from '../lib/time'
-import type { BusyInterval, Friend, User } from '../lib/types'
+import type { BusyInterval, Friend, Holiday, User } from '../lib/types'
 
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 type CalendarView = 'day' | 'week' | 'month'
@@ -26,11 +32,13 @@ export function CalendarPage() {
   )
   const [selected, setSelected] = useState<number[]>([])
   const [selectedInterval, setSelectedInterval] = useState<BusyInterval | null>(null)
+  const [holidayCardOpen, setHolidayCardOpen] = useState(false)
   const currentUserQuery = useCurrentUser()
   const friendQuery = useFriends()
   const range = useMemo(() => calendarRange(date, view), [date, view])
   const calendarQuery = useCalendarRange(range.start, range.end)
   const friendCalendarQuery = useFriendCalendarRange(range.start, range.end, selected)
+  const holidayQuery = useTodayHoliday()
   const availableFriends = friendQuery.data ?? []
   const selectedFriendIntervals = useMemo(
     () => friendCalendarQuery.data?.flatMap((calendar) => calendar.intervals) ?? [],
@@ -55,6 +63,11 @@ export function CalendarPage() {
     next.setDate(next.getDate() - day + 1)
     return next
   }, [date])
+  const holiday = holidayQuery.data ?? null
+  const holidayDate = holiday ? new Date(`${holiday.date}T12:00:00`) : null
+  const holidayIsInRange = Boolean(
+    holidayDate && holidayDate >= range.start && holidayDate < range.end,
+  )
 
   if (!currentUserQuery.data) return <div className="page loading-state">Загружаем календарь…</div>
   const allFriendsSelected =
@@ -127,6 +140,8 @@ export function CalendarPage() {
             selectedFriendIds={selected}
             onSelectDate={setDate}
             onSelectInterval={setSelectedInterval}
+            holiday={holiday}
+            onSelectHoliday={() => setHolidayCardOpen(true)}
           />
         </>
       ) : (
@@ -149,6 +164,19 @@ export function CalendarPage() {
               )
             })}
           </div>
+          {holiday && holidayIsInRange && (
+            <button
+              type="button"
+              className="holiday-calendar-banner"
+              onClick={() => setHolidayCardOpen(true)}
+            >
+              <span>
+                <Gift size={17} />
+              </span>
+              <strong>Праздник</strong>
+              <Sparkles size={17} />
+            </button>
+          )}
           <section className="calendar-friends">
             <div className="section-heading">
               <div>
@@ -256,6 +284,10 @@ export function CalendarPage() {
         onClose={() => setSelectedInterval(null)}
         onEdit={(interval) => navigate(`/busy/${interval.id}/edit`)}
       />
+      <HolidayCard
+        holiday={holidayCardOpen ? holiday : null}
+        onClose={() => setHolidayCardOpen(false)}
+      />
     </div>
   )
 }
@@ -306,6 +338,8 @@ function MonthCalendar({
   selectedFriendIds,
   onSelectDate,
   onSelectInterval,
+  holiday,
+  onSelectHoliday,
 }: {
   date: Date
   currentUserId: number
@@ -313,6 +347,8 @@ function MonthCalendar({
   selectedFriendIds: number[]
   onSelectDate: (date: Date) => void
   onSelectInterval: (interval: BusyInterval) => void
+  holiday: Holiday | null
+  onSelectHoliday: () => void
 }) {
   const days = useMemo(() => monthDays(date), [date])
   const todayKey = dayKey(new Date())
@@ -333,7 +369,8 @@ function MonthCalendar({
               (left, right) =>
                 new Date(left.start_at).getTime() - new Date(right.start_at).getTime(),
             )
-          const visible = dayIntervals.slice(0, 4)
+          const isHoliday = holiday?.date === key
+          const visible = dayIntervals.slice(0, isHoliday ? 3 : 4)
           return (
             <div
               key={key}
@@ -354,6 +391,18 @@ function MonthCalendar({
             >
               <strong>{day.getDate()}</strong>
               <span className="month-cell__events">
+                {isHoliday && (
+                  <button
+                    type="button"
+                    className="holiday-calendar-chip"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onSelectHoliday()
+                    }}
+                  >
+                    Праздник
+                  </button>
+                )}
                 {visible.map((interval) => {
                   const isOwn = interval.user_id === currentUserId
                   const title =
@@ -383,6 +432,36 @@ function MonthCalendar({
         })}
       </div>
     </section>
+  )
+}
+
+function HolidayCard({ holiday, onClose }: { holiday: Holiday | null; onClose: () => void }) {
+  if (!holiday) return null
+  const formattedDate = new Date(`${holiday.date}T12:00:00`).toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+  })
+  return (
+    <ModalSheet open title="Праздник сегодня" onClose={onClose}>
+      <article className="holiday-card">
+        <div className="holiday-card__art" aria-hidden="true">
+          <i>✦</i>
+          <i>●</i>
+          <i>✦</i>
+          <span>🎉</span>
+        </div>
+        <span className="holiday-card__category">{holiday.category}</span>
+        <h3>{holiday.title}</h3>
+        <p>
+          Поздравляем! Пусть этот день подарит хороший повод улыбнуться, написать близким и провести
+          время вместе.
+        </p>
+        <div className="holiday-card__date">{formattedDate}</div>
+        <a href={holiday.source_url} target="_blank" rel="noreferrer">
+          Посмотреть источник <ExternalLink size={15} />
+        </a>
+      </article>
+    </ModalSheet>
   )
 }
 
@@ -487,7 +566,9 @@ function addDays(date: Date, days: number) {
 }
 
 function dayKey(date: Date) {
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
 }
 
 function overlapsDay(interval: BusyInterval, day: Date) {

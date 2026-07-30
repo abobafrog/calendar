@@ -5,6 +5,7 @@ import type {
   Friend,
   FriendRequest,
   FreeSlotData,
+  Holiday,
   Meeting,
   SiteNotification,
   User,
@@ -81,6 +82,23 @@ export function useFriendRequestResponse() {
   return useMutation({
     mutationFn: ({ id, action }: { id: number; action: 'accept' | 'reject' }) =>
       apiRequest<FriendRequest>(`/friend-requests/${id}/${action}`, { method: 'POST' }),
+  })
+}
+
+export function useCancelFriendRequest() {
+  return useMutation({
+    mutationFn: (id: number) => apiRequest<void>(`/friend-requests/${id}`, { method: 'DELETE' }),
+  })
+}
+
+export function useTodayHoliday() {
+  return useQuery({
+    queryKey: ['holidays', 'today'],
+    queryFn: () => apiRequest<Holiday | null>('/holidays/today'),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    retry: 1,
   })
 }
 

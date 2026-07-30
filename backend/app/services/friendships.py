@@ -74,6 +74,13 @@ class FriendshipService:
         await self.session.refresh(relation)
         return relation
 
+    async def cancel_request(self, actor: User, friendship_id: int) -> None:
+        relation = await self.repository.get_by_id(friendship_id, for_update=True)
+        if relation is None or relation.requester_id != actor.id or relation.status != FriendshipStatus.PENDING:
+            raise AppError(404, "friend_request_not_found", "Исходящее приглашение не найдено")
+        await self.session.delete(relation)
+        await self.session.commit()
+
     async def remove_friend(self, actor: User, friend_id: int) -> None:
         relation = await self.repository.get_pair(actor.id, friend_id, for_update=True)
         if relation is None or relation.status != FriendshipStatus.ACCEPTED:

@@ -115,6 +115,18 @@ async def reject_friend_request(
     return FriendshipResponse.model_validate(relation)
 
 
+@router.delete("/friend-requests/{friendship_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_friend_request(
+    friendship_id: int,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
+) -> Response:
+    await enforce_rate_limit(redis, f"rate:friend-write:{current_user.id}", RateLimit(120, 3600))
+    await FriendshipService(session).cancel_request(current_user, friendship_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.delete("/friends/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_friend(
     user_id: int,

@@ -9,6 +9,7 @@ import { ModalSheet } from '../components/ModalSheet'
 import { UserAvatar } from '../components/UserAvatar'
 import {
   useCreateFriendRequest,
+  useCancelFriendRequest,
   useCurrentUser,
   useFriendAction,
   useFriendInvitePreview,
@@ -32,6 +33,7 @@ export function FriendsPage() {
   const incomingQuery = useIncomingFriendRequests()
   const outgoingQuery = useOutgoingFriendRequests()
   const createRequest = useCreateFriendRequest()
+  const cancelRequest = useCancelFriendRequest()
   const requestResponse = useFriendRequestResponse()
   const friendAction = useFriendAction()
   const renameFriend = useRenameFriend()
@@ -244,51 +246,61 @@ export function FriendsPage() {
       {tab === 'incoming' && (
         <section className="list-section">
           <h2>Новые приглашения</h2>
-          <div className="people-list">
-            {incomingRequests.map((request) => (
-              <article key={request.id} className="person-row">
-                <UserAvatar user={request.user} />
-                <div>
-                  <strong>{request.user.first_name}</strong>
-                  <span>@{request.user.username}</span>
-                </div>
-                <div className="row-actions">
-                  <button
-                    type="button"
-                    className="accept"
-                    aria-label="Принять"
-                    onClick={async () => {
-                      try {
-                        await requestResponse.mutateAsync({ id: request.id, action: 'accept' })
-                        setToast('Приглашение принято')
-                        await invalidateSocialData()
-                      } catch (error) {
-                        showError(error)
-                      }
-                    }}
-                  >
-                    <Check size={19} />
-                  </button>
-                  <button
-                    type="button"
-                    className="reject"
-                    aria-label="Отклонить"
-                    onClick={async () => {
-                      try {
-                        await requestResponse.mutateAsync({ id: request.id, action: 'reject' })
-                        setToast('Приглашение отклонено')
-                        await invalidateSocialData()
-                      } catch (error) {
-                        showError(error)
-                      }
-                    }}
-                  >
-                    <X size={19} />
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+          {incomingRequests.length ? (
+            <div className="people-list">
+              {incomingRequests.map((request) => (
+                <article key={request.id} className="person-row">
+                  <UserAvatar user={request.user} />
+                  <div>
+                    <strong>{request.user.first_name}</strong>
+                    <span>@{request.user.username}</span>
+                  </div>
+                  <div className="row-actions">
+                    <button
+                      type="button"
+                      className="accept"
+                      aria-label="Принять"
+                      onClick={async () => {
+                        try {
+                          await requestResponse.mutateAsync({ id: request.id, action: 'accept' })
+                          setToast('Приглашение принято')
+                          await invalidateSocialData()
+                        } catch (error) {
+                          showError(error)
+                        }
+                      }}
+                    >
+                      <Check size={19} />
+                    </button>
+                    <button
+                      type="button"
+                      className="reject"
+                      aria-label="Отклонить"
+                      onClick={async () => {
+                        try {
+                          await requestResponse.mutateAsync({ id: request.id, action: 'reject' })
+                          setToast('Приглашение отклонено')
+                          await invalidateSocialData()
+                        } catch (error) {
+                          showError(error)
+                        }
+                      }}
+                    >
+                      <X size={19} />
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state empty-state--requests">
+              <div>
+                <UserPlus size={26} />
+              </div>
+              <h2>Пока нет приглашений</h2>
+              <p>Новые входящие приглашения появятся здесь.</p>
+            </div>
+          )}
         </section>
       )}
       {tab === 'outgoing' && (
@@ -305,7 +317,26 @@ export function FriendsPage() {
                     </strong>
                     <span>@{request.user.username}</span>
                   </div>
-                  <span className="request-status">Ожидает ответа</span>
+                  <div className="outgoing-request-actions">
+                    <span className="request-status">Ожидает ответа</span>
+                    <button
+                      type="button"
+                      className="cancel-request-button"
+                      disabled={cancelRequest.isPending}
+                      onClick={async () => {
+                        try {
+                          await cancelRequest.mutateAsync(request.id)
+                          setToast('Приглашение отменено')
+                          await invalidateSocialData()
+                        } catch (error) {
+                          showError(error)
+                        }
+                      }}
+                    >
+                      <X size={16} />
+                      Отменить
+                    </button>
+                  </div>
                 </article>
               ))}
             </div>

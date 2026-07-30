@@ -8,6 +8,9 @@ from app.services.friendships import FriendshipService
 
 
 class FakeSession:
+    def __init__(self) -> None:
+        self.deleted: object | None = None
+
     async def commit(self) -> None:
         return None
 
@@ -16,6 +19,9 @@ class FakeSession:
 
     def add(self, _value: object) -> None:
         return None
+
+    async def delete(self, value: object) -> None:
+        self.deleted = value
 
 
 class FakeUsers:
@@ -37,6 +43,9 @@ class FakeRepository:
         return None
 
     async def get_pair(self, _left_id: int, _right_id: int, for_update: bool = False) -> Friendship | None:
+        return self.relation
+
+    async def get_by_id(self, _friendship_id: int, for_update: bool = False) -> Friendship | None:
         return self.relation
 
 
@@ -87,3 +96,38 @@ async def test_blocked_user_cannot_send_another_request() -> None:
     with pytest.raises(AppError) as error:
         await service.create_request(actor, FriendRequestCreate(username="target"))
     assert error.value.code == "friendship_blocked"
+
+
+@pytest.mark.asyncio
+async def test_requester_can_cancel_pending_request() -> None:
+    actor = User(id=1, telegram_id=101, first_name="A", invite_code="actor-code")
+    target = User(id=2, telegram_id=202, first_name="B", invite_code="target-code")
+    pending = Friendship(
+        id=9,
+        requester_id=actor.id,
+        addressee_id=target.id,
+        status=FriendshipStatus.PENDING,
+    )
+    service = service_with(pending, target)
+
+    await service.cancel_request(actor, pending.id)
+
+    assert service.session.deleted is pending  # type: ignore[attr-defined]
+
+
+@pytest.mark.asyncio
+async def test_addressee_cannot_cancel_outgoing_request() -> None:
+    actor = User(id=1, telegram_id=101, first_name="A", invite_code="actor-code")
+    target = User(id=2, telegram_id=202, first_name="B", invite_code="target-code")
+    pending = Friendship(
+        id=10,
+        requester_id=target.id,
+        addressee_id=actor.id,
+        status=FriendshipStatus.PENDING,
+    )
+    service = service_with(pending, target)
+
+    with pytest.raises(AppError) as error:
+        await service.cancel_request(actor, pending.id)
+
+    assert error.value.code == "friend_request_not_found"
