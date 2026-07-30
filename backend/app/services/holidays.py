@@ -16,6 +16,7 @@ REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; TimeTogether/1.0; +https://froklalol.ru)",
 }
 _cache: tuple[date, float, list[str], str] | None = None
+_last_title: str | None = None
 
 
 def _clean_title(value: str) -> str:
@@ -48,6 +49,13 @@ def classify_holiday(title: str) -> str:
     return "Необычный"
 
 
+def _choose_title(titles: list[str]) -> str:
+    global _last_title
+    choices = [title for title in titles if title != _last_title] or titles
+    _last_title = secrets.choice(choices)
+    return _last_title
+
+
 async def _load_source(client: httpx.AsyncClient, url: str) -> list[str]:
     response = await client.get(url, headers=REQUEST_HEADERS)
     response.raise_for_status()
@@ -61,7 +69,7 @@ async def get_random_holiday(today: date) -> HolidayResponse | None:
     if _cache is not None:
         cached_date, cached_at, cached_titles, cached_source = _cache
         if cached_date == today and time.monotonic() - cached_at < 900:
-            title = secrets.choice(cached_titles)
+            title = _choose_title(cached_titles)
             return HolidayResponse(
                 title=title,
                 category=classify_holiday(title),
@@ -77,7 +85,7 @@ async def get_random_holiday(today: date) -> HolidayResponse | None:
                 continue
             if titles:
                 _cache = (today, time.monotonic(), titles, source)
-                title = secrets.choice(titles)
+                title = _choose_title(titles)
                 return HolidayResponse(
                     title=title,
                     category=classify_holiday(title),
