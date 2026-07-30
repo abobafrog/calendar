@@ -1,6 +1,8 @@
 import { Check, ExternalLink, Gift, ListFilter, Pencil, Plus, Sparkles } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
+import { apiRequest } from '../api/client'
 import {
   useCalendarRange,
   useCurrentUser,
@@ -14,6 +16,7 @@ import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
 import { UserAvatar } from '../components/UserAvatar'
 import { TimeGrid } from '../components/TimeGrid'
+import { Toast } from '../components/Toast'
 import { ModalSheet } from '../components/ModalSheet'
 import { colorForUser } from '../lib/colors'
 import { formatDateInZone, formatTimeInZone } from '../lib/time'
@@ -24,6 +27,7 @@ type CalendarView = 'day' | 'week' | 'month'
 
 export function CalendarPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [date, setDate] = useState(new Date())
   const [view, setView] = useState<CalendarView>(() =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches
@@ -33,6 +37,8 @@ export function CalendarPage() {
   const [selected, setSelected] = useState<number[]>([])
   const [selectedInterval, setSelectedInterval] = useState<BusyInterval | null>(null)
   const [holidayCardOpen, setHolidayCardOpen] = useState(false)
+  const [finishingIntervalId, setFinishingIntervalId] = useState<number | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
   const currentUserQuery = useCurrentUser()
   const friendQuery = useFriends()
   const range = useMemo(() => calendarRange(date, view), [date, view])
@@ -64,10 +70,25 @@ export function CalendarPage() {
     return next
   }, [date])
   const holiday = holidayQuery.data ?? null
-  const holidayDate = holiday ? new Date(`${holiday.date}T12:00:00`) : null
-  const holidayIsInRange = Boolean(
-    holidayDate && holidayDate >= range.start && holidayDate < range.end,
-  )
+  const holidayIsSelectedDate = holiday?.date === dayKey(date)
+
+  const finishInterval = async (interval: BusyInterval) => {
+    if (finishingIntervalId !== null) return
+    try {
+      setFinishingIntervalId(interval.id)
+      await apiRequest<BusyInterval>(`/calendar/intervals/${interval.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ end_at: new Date().toISOString() }),
+      })
+      await queryClient.invalidateQueries({ queryKey: ['calendar'], refetchType: 'all' })
+      setSelectedInterval(null)
+      setToast('Дело отмечено завершённым')
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : 'Не удалось завершить дело')
+    } finally {
+      setFinishingIntervalId(null)
+    }
+  }
 
   if (!currentUserQuery.data) return <div className="page loading-state">Загружаем календарь…</div>
   const allFriendsSelected =
@@ -80,15 +101,24 @@ export function CalendarPage() {
           <span className="eyebrow">Время вместе</span>
           <h1>Календарь</h1>
         </div>
-        <GlassButton
-          variant="icon"
-          aria-label={allFriendsSelected ? 'Скрыть друнов' : 'Показать всех друнов'}
-          onClick={() => {
-            setSelected(allFriendsSelected ? [] : availableFriends.map((friend) => friend.id))
-          }}
-        >
-          <ListFilter size={20} />
-        </GlassButton>
+        <div className="calendar-header-actions">
+          <Link
+            to="/busy/new"
+            className="header-action desktop-add-action"
+            aria-label="Добавить занятость"
+          >
+            <Plus size={20} />
+          </Link>
+          <GlassButton
+            variant="icon"
+            aria-label={allFriendsSelected ? 'Скрыть друнов' : 'Показать всех друнов'}
+            onClick={() => {
+              setSelected(allFriendsSelected ? [] : availableFriends.map((friend) => friend.id))
+            }}
+          >
+            <ListFilter size={20} />
+          </GlassButton>
+        </div>
       </header>
       <div className="calendar-toolbar">
         <DateSwitcher
@@ -164,7 +194,7 @@ export function CalendarPage() {
               )
             })}
           </div>
-          {holiday && holidayIsInRange && (
+          {holiday && holidayIsSelectedDate && (
             <button
               type="button"
               className="holiday-calendar-banner"
@@ -283,11 +313,14 @@ export function CalendarPage() {
         friends={availableFriends}
         onClose={() => setSelectedInterval(null)}
         onEdit={(interval) => navigate(`/busy/${interval.id}/edit`)}
+        onFinish={(interval) => void finishInterval(interval)}
+        finishing={finishingIntervalId === selectedInterval?.id}
       />
       <HolidayCard
         holiday={holidayCardOpen ? holiday : null}
         onClose={() => setHolidayCardOpen(false)}
       />
+      <Toast message={toast} onClose={() => setToast(null)} />
     </div>
   )
 }
@@ -369,7 +402,10 @@ function MonthCalendar({
               (left, right) =>
                 new Date(left.start_at).getTime() - new Date(right.start_at).getTime(),
             )
-          const isHoliday = holiday?.date === key
+          const isHoliday =
+            holiday?.date === key &&
+            day.getMonth() === date.getMonth() &&
+            day.getFullYear() === date.getFullYear()
           const visible = dayIntervals.slice(0, isHoliday ? 3 : 4)
           return (
             <div
@@ -473,18 +509,28 @@ function IntervalSummary({
   friends,
   onClose,
   onEdit,
+  onFinish,
+  finishing,
 }: {
   interval: BusyInterval | null
   currentUser: User
   friends: Friend[]
   onClose: () => void
   onEdit: (interval: BusyInterval) => void
+  onFinish: (interval: BusyInterval) => void
+  finishing: boolean
 }) {
   if (!interval) return null
   const isOwn = interval.user_id === currentUser.id
   const friend = friends.find((item) => item.id === interval.user_id)
   const owner = isOwn ? currentUser : friend
   const ownerName = isOwn ? 'Вы' : friend?.alias || friend?.first_name || 'Друн'
+  const now = new Date()
+  const canFinishNow =
+    isOwn &&
+    !interval.meeting_id &&
+    new Date(interval.start_at) < now &&
+    now < new Date(interval.end_at)
 
   return (
     <ModalSheet open title={interval.title ?? 'Занят'} onClose={onClose}>
@@ -522,10 +568,18 @@ function IntervalSummary({
           )}
         </dl>
         {isOwn && (
-          <GlassButton variant="primary" onClick={() => onEdit(interval)}>
-            <Pencil size={17} />
-            Редактировать дело
-          </GlassButton>
+          <>
+            {canFinishNow && (
+              <GlassButton disabled={finishing} onClick={() => onFinish(interval)}>
+                <Check size={17} />
+                {finishing ? 'Завершаем…' : 'Дело уже завершено'}
+              </GlassButton>
+            )}
+            <GlassButton variant="primary" onClick={() => onEdit(interval)}>
+              <Pencil size={17} />
+              Редактировать дело
+            </GlassButton>
+          </>
         )}
       </div>
     </ModalSheet>

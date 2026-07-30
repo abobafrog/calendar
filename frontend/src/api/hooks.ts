@@ -7,6 +7,8 @@ import type {
   FreeSlotData,
   Holiday,
   Meeting,
+  PaymentRecord,
+  PaymentSummary,
   SiteNotification,
   User,
   UserCalendar,
@@ -99,6 +101,23 @@ export function useTodayHoliday() {
     gcTime: 0,
     refetchOnMount: 'always',
     retry: 1,
+  })
+}
+
+export function usePaymentSummary() {
+  return useQuery({
+    queryKey: ['payments', 'summary'],
+    queryFn: () => apiRequest<PaymentSummary>('/payments/summary'),
+  })
+}
+
+export function useCreateDonation() {
+  return useMutation({
+    mutationFn: (payload: { amount: number; method: PaymentRecord['method'] }) =>
+      apiRequest<PaymentRecord>('/payments/donations', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
   })
 }
 

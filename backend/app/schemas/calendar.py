@@ -4,6 +4,7 @@ from pydantic import Field, model_validator
 
 from app.models.enums import IntervalVisibility
 from app.schemas.common import APIModel, DateRangeMixin
+from app.schemas.payments import PaymentMethod
 from app.schemas.users import UserSummary
 
 
@@ -26,6 +27,7 @@ class BusyIntervalCreate(DateRangeMixin):
 
 class BusyIntervalBulkCreate(APIModel):
     intervals: list[BusyIntervalCreate] = Field(min_length=1, max_length=100)
+    payment_method: PaymentMethod
 
 
 class BusyIntervalUpdate(APIModel):

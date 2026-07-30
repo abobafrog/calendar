@@ -3,27 +3,24 @@ import { useState } from 'react'
 import { GlassButton } from './GlassButton'
 import { ModalSheet } from './ModalSheet'
 
-type PaymentMethod = 'visa' | 'sbp' | 'mir-pay'
+export type PaymentMethod = 'visa' | 'sbp' | 'mir_pay'
+type PaymentPurpose = 'busy' | 'donation'
 type PaymentStatus = 'choice' | 'processing' | 'success'
 
-const progressMessages = [
-  {
-    title: 'Готовим безопасную оплату',
-    description: 'Проверяем выбранный способ и данные заказа.',
-  },
-  {
-    title: 'Связываемся с банком',
-    description: 'Ждём подтверждение демонстрационной операции.',
-  },
-  {
-    title: 'Закрепляем выбранное время',
-    description: 'Сохраняем дела и проверяем календарь.',
-  },
-  {
-    title: 'Ещё чуть-чуть — календарь будет готов',
-    description: 'Подтверждаем оплату сервиса и завершаем настройку.',
-  },
-]
+const progressMessages: Record<PaymentPurpose, Array<{ title: string; description: string }>> = {
+  busy: [
+    { title: 'Готовим безопасную оплату', description: 'Проверяем способ и данные операции.' },
+    { title: 'Связываемся с банком', description: 'Ждём подтверждение демонстрационной оплаты.' },
+    { title: 'Оплачиваем создание занятости', description: 'Закрепляем выбранные интервалы.' },
+    { title: 'Ещё чуть-чуть — занятость будет готова', description: 'Сохраняем дело в календаре.' },
+  ],
+  donation: [
+    { title: 'Готовим безопасную оплату', description: 'Проверяем сумму и выбранный способ.' },
+    { title: 'Связываемся с банком', description: 'Ждём подтверждение демонстрационной оплаты.' },
+    { title: 'Передаём пожертвование', description: 'Записываем вашу поддержку в историю.' },
+    { title: 'Ещё чуть-чуть — почти готово', description: 'Завершаем операцию и обновляем итог.' },
+  ],
+}
 
 const methods: Array<{
   id: PaymentMethod
@@ -38,7 +35,7 @@ const methods: Array<{
     icon: CreditCard,
   },
   { id: 'sbp', title: 'СБП', description: 'Оплата по номеру телефона', icon: Landmark },
-  { id: 'mir-pay', title: 'Мир Пэй', description: 'Оплата одним касанием', icon: Radio },
+  { id: 'mir_pay', title: 'Мир Пэй', description: 'Оплата одним касанием', icon: Radio },
 ]
 
 const delay = (milliseconds: number) =>
@@ -49,16 +46,22 @@ export function PaymentSheet({
   onClose,
   onConfirmed,
   onSuccess,
+  amount = 99,
+  purpose = 'busy',
 }: {
   open: boolean
   onClose: () => void
-  onConfirmed: () => Promise<void>
+  onConfirmed: (method: PaymentMethod) => Promise<void>
   onSuccess: () => void
+  amount?: number
+  purpose?: PaymentPurpose
 }) {
   const [method, setMethod] = useState<PaymentMethod>('visa')
   const [status, setStatus] = useState<PaymentStatus>('choice')
   const [progressIndex, setProgressIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const messages = progressMessages[purpose]
+  const formattedAmount = new Intl.NumberFormat('ru-RU').format(amount)
 
   const close = () => {
     if (status === 'processing') return
@@ -72,15 +75,18 @@ export function PaymentSheet({
     setStatus('processing')
     setProgressIndex(0)
     setError(null)
-    for (let index = 1; index < progressMessages.length; index += 1) {
+    for (let index = 1; index < messages.length; index += 1) {
       await delay(650)
       setProgressIndex(index)
     }
     await delay(650)
     try {
-      await onConfirmed()
+      await onConfirmed(method)
       setStatus('success')
       await delay(650)
+      setStatus('choice')
+      setProgressIndex(0)
+      setError(null)
       onSuccess()
     } catch (paymentError) {
       setStatus('choice')
@@ -93,14 +99,22 @@ export function PaymentSheet({
   return (
     <ModalSheet
       open={open}
-      title={status === 'choice' ? 'Оплата сервиса' : 'Создаём календарь'}
+      title={
+        status === 'choice'
+          ? purpose === 'busy'
+            ? 'Оплата создания занятости'
+            : 'Пожертвование проекту'
+          : purpose === 'busy'
+            ? 'Создаём занятость'
+            : 'Принимаем пожертвование'
+      }
       onClose={close}
     >
       {status === 'choice' ? (
         <div className="payment-sheet">
           <div className="payment-price">
-            <span>Подготовка календаря</span>
-            <strong>99 ₽</strong>
+            <span>{purpose === 'busy' ? 'Создание занятости' : 'Поддержка проекта'}</span>
+            <strong>{formattedAmount} ₽</strong>
           </div>
           <div className="payment-methods" role="radiogroup" aria-label="Способ оплаты">
             {methods.map((item) => {
@@ -133,7 +147,7 @@ export function PaymentSheet({
             <span>Это демонстрационная оплата — деньги не списываются</span>
           </div>
           <GlassButton variant="primary" className="payment-submit" onClick={() => void pay()}>
-            Оплатить 99 ₽
+            Оплатить {formattedAmount} ₽
           </GlassButton>
         </div>
       ) : (
@@ -141,13 +155,13 @@ export function PaymentSheet({
           <div className="payment-progress__mark">
             {status === 'success' ? <Check size={32} /> : <span />}
           </div>
-          <h3>
-            {status === 'success' ? 'Оплата подтверждена' : progressMessages[progressIndex].title}
-          </h3>
+          <h3>{status === 'success' ? 'Оплата подтверждена' : messages[progressIndex].title}</h3>
           <p>
             {status === 'success'
-              ? 'Всё готово, открываем ваш календарь.'
-              : progressMessages[progressIndex].description}
+              ? purpose === 'busy'
+                ? 'Всё готово, добавляем занятость в календарь.'
+                : 'Спасибо! Пожертвование добавлено в историю.'
+              : messages[progressIndex].description}
           </p>
         </div>
       )}

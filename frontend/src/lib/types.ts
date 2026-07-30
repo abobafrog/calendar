@@ -51,6 +51,22 @@ export interface Holiday {
   source_url: string
 }
 
+export type PaymentMethod = 'visa' | 'sbp' | 'mir_pay'
+export type PaymentPurpose = 'busy_interval' | 'donation'
+
+export interface PaymentRecord {
+  id: number
+  amount: number
+  purpose: PaymentPurpose
+  method: PaymentMethod
+  created_at: string
+}
+
+export interface PaymentSummary {
+  total_amount: number
+  payments: PaymentRecord[]
+}
+
 export interface UserCalendar {
   user: User
   intervals: BusyInterval[]

@@ -10,6 +10,7 @@ import {
   SearchCheck,
   UserPlus,
   UsersRound,
+  WalletCards,
 } from 'lucide-react'
 import { apiRequest } from '../api/client'
 import { ThemeBackground } from '../components/ThemeBackground'
@@ -147,6 +148,16 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <p>
             Календарь отмечает праздник дня и открывает поздравительную карточку. В профиле можно
             выбрать категории или полностью скрыть праздники.
+          </p>
+        </article>
+        <article>
+          <span>
+            <WalletCards size={20} />
+          </span>
+          <h2>Оплата и поддержка</h2>
+          <p>
+            Создание занятости сопровождается демонстрационной оплатой. Пожертвования и вся история
+            расходов доступны в профиле.
           </p>
         </article>
       </section>

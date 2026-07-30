@@ -992,6 +992,23 @@ select:focus-visible {
   background: linear-gradient(145deg, #6257f4, #9448ed);
   box-shadow: 0 12px 26px rgba(89, 65, 228, 0.36);
 }
+.calendar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desktop-add-action {
+  display: none;
+}
+
+@media (min-width: 680px) {
+  .floating-action {
+    display: none;
+  }
+  .desktop-add-action {
+    display: grid;
+  }
+}
 
 .form-page {
   padding-bottom: 94px;
@@ -1744,6 +1761,102 @@ select:focus-visible {
   color: var(--muted);
   font-size: 10px;
   line-height: 1.45;
+}
+.donation-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+.donation-total {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.donation-total > span {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #f09554, #9b57e9);
+}
+.donation-total > div {
+  display: grid;
+  gap: 2px;
+}
+.donation-total small,
+.donation-amount small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.donation-total strong {
+  font-size: 22px;
+}
+.donation-amount > div {
+  position: relative;
+}
+.donation-amount input {
+  padding-right: 42px;
+}
+.donation-amount b {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+}
+.donation-panel > .glass-button {
+  width: 100%;
+}
+.payment-history {
+  margin-top: 10px;
+  padding: 14px;
+}
+.payment-history__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+}
+.payment-history__header strong {
+  color: var(--text);
+  font-size: 13px;
+}
+.payment-history > p {
+  margin: 14px 0 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.payment-history__list {
+  display: grid;
+  margin-top: 10px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.payment-history__list > div {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+}
+.payment-history__list > div > span {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+.payment-history__list strong {
+  font-size: 11px;
+}
+.payment-history__list small {
+  color: var(--muted);
+  font-size: 9px;
+}
+.payment-history__list b {
+  color: var(--accent);
+  font-size: 12px;
 }
 .settings-list > .settings-logout,
 .settings-list > .settings-logout strong {

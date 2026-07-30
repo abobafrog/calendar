@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.friendship import Friendship
     from app.models.meeting import MeetingParticipant, MeetingProposal
     from app.models.notification import Notification
+    from app.models.payment import Payment
 
 
 class User(TimestampMixin, Base):
@@ -55,3 +56,4 @@ class User(TimestampMixin, Base):
     created_meetings: Mapped[list["MeetingProposal"]] = relationship(back_populates="creator")
     meeting_participations: Mapped[list["MeetingParticipant"]] = relationship(back_populates="user")
     notifications: Mapped[list["Notification"]] = relationship(back_populates="user")
+    payments: Mapped[list["Payment"]] = relationship(back_populates="user")

@@ -6,7 +6,9 @@ import {
   Edit2,
   Flag,
   Globe2,
+  HandHeart,
   Heart,
+  History,
   LogOut,
   Moon,
   ShieldCheck,
@@ -20,10 +22,17 @@ import { useQueryClient } from '@tanstack/react-query'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
 import { ModalSheet } from '../components/ModalSheet'
+import { PaymentSheet } from '../components/PaymentSheet'
+import type { PaymentMethod } from '../components/PaymentSheet'
 import { Toast } from '../components/Toast'
 import { UserAvatar } from '../components/UserAvatar'
 import { useTheme } from '../hooks/useTheme'
-import { useCurrentUser, useUpdateCurrentUser } from '../api/hooks'
+import {
+  useCreateDonation,
+  useCurrentUser,
+  usePaymentSummary,
+  useUpdateCurrentUser,
+} from '../api/hooks'
 import { formatLocalClockTime } from '../lib/time'
 import { timezoneLabel, timezoneOptionsWithCurrent } from '../lib/timezones'
 import type { HolidayCategory, ThemeMode, User } from '../lib/types'
@@ -77,8 +86,12 @@ export function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const [toast, setToast] = useState<string | null>(null)
   const [sheet, setSheet] = useState<'profile' | 'timezone' | 'workday' | 'format' | null>(null)
+  const [donationAmount, setDonationAmount] = useState('100')
+  const [donationOpen, setDonationOpen] = useState(false)
   const currentUserQuery = useCurrentUser()
   const updateUser = useUpdateCurrentUser()
+  const paymentSummaryQuery = usePaymentSummary()
+  const createDonation = useCreateDonation()
   const queryClient = useQueryClient()
   const currentUser = currentUserQuery.data
   if (!currentUser) return <div className="page loading-state">Загружаем профиль…</div>
@@ -115,6 +128,10 @@ export function SettingsPage() {
   const workdayStart = (currentUser.workday_start ?? '09:00').slice(0, 5)
   const workdayEnd = (currentUser.workday_end ?? '18:00').slice(0, 5)
   const timeFormat = currentUser.time_format ?? '24h'
+  const donationValue = Number(donationAmount)
+  const validDonation =
+    Number.isInteger(donationValue) && donationValue >= 1 && donationValue <= 1_000_000
+  const paymentSummary = paymentSummaryQuery.data
   return (
     <div className="page settings-page">
       <header className="page-header">
@@ -251,6 +268,78 @@ export function SettingsPage() {
         </GlassPanel>
       </section>
       <section className="settings-section">
+        <h2>Поддержка проекта</h2>
+        <GlassPanel className="donation-panel">
+          <div className="donation-total">
+            <span>
+              <HandHeart size={21} />
+            </span>
+            <div>
+              <small>Всего потрачено</small>
+              <strong>{formatRubles(paymentSummary?.total_amount ?? 0)} ₽</strong>
+            </div>
+          </div>
+          <label className="field donation-amount">
+            <span>Сумма пожертвования</span>
+            <div>
+              <input
+                type="number"
+                min="1"
+                max="1000000"
+                step="1"
+                inputMode="numeric"
+                value={donationAmount}
+                onChange={(event) => setDonationAmount(event.target.value)}
+              />
+              <b>₽</b>
+            </div>
+            <small>От 1 до 1 000 000 рублей</small>
+          </label>
+          <GlassButton
+            variant="primary"
+            disabled={!validDonation || createDonation.isPending}
+            onClick={() => setDonationOpen(true)}
+          >
+            <HandHeart size={18} />
+            Пожертвовать
+          </GlassButton>
+        </GlassPanel>
+        <GlassPanel className="payment-history">
+          <div className="payment-history__header">
+            <History size={18} />
+            <strong>История расходов</strong>
+          </div>
+          {paymentSummaryQuery.isLoading ? (
+            <p>Загружаем историю…</p>
+          ) : paymentSummary?.payments.length ? (
+            <div className="payment-history__list">
+              {paymentSummary.payments.map((payment) => (
+                <div key={payment.id}>
+                  <span>
+                    <strong>
+                      {payment.purpose === 'donation' ? 'Пожертвование' : 'Создание занятости'}
+                    </strong>
+                    <small>
+                      {new Date(payment.created_at).toLocaleString('ru-RU', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}{' '}
+                      · {paymentMethodLabel(payment.method)}
+                    </small>
+                  </span>
+                  <b>{formatRubles(payment.amount)} ₽</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>Пока расходов нет.</p>
+          )}
+        </GlassPanel>
+      </section>
+      <section className="settings-section">
         <h2>Аккаунт</h2>
         <GlassPanel className="settings-list">
           <button
@@ -289,9 +378,33 @@ export function SettingsPage() {
         onClose={() => setSheet(null)}
         onSave={saveUser}
       />
+      <PaymentSheet
+        open={donationOpen}
+        purpose="donation"
+        amount={validDonation ? donationValue : 1}
+        onClose={() => setDonationOpen(false)}
+        onConfirmed={async (method: PaymentMethod) => {
+          await createDonation.mutateAsync({ amount: donationValue, method })
+        }}
+        onSuccess={() => {
+          setDonationOpen(false)
+          void queryClient.invalidateQueries({ queryKey: ['payments', 'summary'] })
+          setToast('Спасибо за поддержку!')
+        }}
+      />
       <Toast message={toast} onClose={() => setToast(null)} />
     </div>
   )
+}
+
+function formatRubles(amount: number) {
+  return new Intl.NumberFormat('ru-RU').format(amount)
+}
+
+function paymentMethodLabel(method: PaymentMethod) {
+  if (method === 'sbp') return 'СБП'
+  if (method === 'mir_pay') return 'Мир Пэй'
+  return 'Карта «Виза»'
 }
 
 function SettingsSheet({

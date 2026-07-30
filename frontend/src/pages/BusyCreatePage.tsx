@@ -7,6 +7,7 @@ import { DateSwitcher } from '../components/DateSwitcher'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
 import { PaymentSheet } from '../components/PaymentSheet'
+import type { PaymentMethod } from '../components/PaymentSheet'
 import { formatLocalDateKey, fromLocalDateKey, toLocalDateKey } from '../lib/time'
 import type { Visibility } from '../lib/types'
 
@@ -40,7 +41,7 @@ export function BusyCreatePage() {
   const canSave =
     days.length > 0 && blocks.every(({ start, end }) => timeToMinutes(start) < timeToMinutes(end))
 
-  const save = async () => {
+  const save = async (paymentMethod: PaymentMethod) => {
     if (!canSave || saving) return
     const base = fromLocalDateKey(date)
     const intervals = days.flatMap((day) =>
@@ -62,7 +63,7 @@ export function BusyCreatePage() {
       setSaving(true)
       await apiRequest('/calendar/intervals/bulk', {
         method: 'POST',
-        body: JSON.stringify({ intervals }),
+        body: JSON.stringify({ intervals, payment_method: paymentMethod }),
       })
       await queryClient.invalidateQueries({ queryKey: ['calendar'], refetchType: 'all' })
     } catch (error) {

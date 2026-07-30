@@ -18,6 +18,7 @@ from app.schemas.calendar import (
 )
 from app.schemas.users import UserSummary
 from app.services.calendar import CalendarService
+from app.services.payments import PaymentService
 from fastapi import APIRouter, Depends, Query, Response, status
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -82,6 +83,7 @@ async def create_intervals_bulk(
     redis: Redis = Depends(get_redis),
 ) -> list[BusyIntervalResponse]:
     await enforce_rate_limit(redis, f"rate:calendar-bulk:{current_user.id}", RateLimit(30, 3600))
+    await PaymentService(session).record_busy_creation(current_user, payload.payment_method)
     intervals = await CalendarService(session).create_bulk(current_user, payload.intervals)
     return [BusyIntervalResponse.model_validate(item) for item in intervals]
 
