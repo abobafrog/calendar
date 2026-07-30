@@ -12,8 +12,10 @@ describe('murinsky language', () => {
     )
   })
 
-  it('translates the massage table template predictably', () => {
-    expect(toMurinsky('Массажные столы')).toBe('Массажность столность')
+  it('preserves adjectives', () => {
+    expect(toMurinsky('Массажные столы и обычная встреча')).toBe(
+      'Массажные столность и обычная встречость',
+    )
   })
 
   it('never translates finite verbs', () => {

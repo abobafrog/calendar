@@ -57,6 +57,44 @@ VERB_ENDINGS = (
     "ёт",
     "ит",
 )
+ADJECTIVE_ENDINGS = (
+    "ыми",
+    "ими",
+    "ого",
+    "его",
+    "ому",
+    "ему",
+    "ую",
+    "юю",
+    "ая",
+    "яя",
+    "ое",
+    "ее",
+    "ые",
+    "ый",
+    "ой",
+    "ых",
+    "их",
+    "ым",
+)
+ADJECTIVES = {
+    "ближайшие",
+    "внутренние",
+    "входящие",
+    "гибкие",
+    "исходящие",
+    "лучшие",
+    "муринский",
+    "общие",
+    "общий",
+    "предстоящие",
+    "предыдущий",
+    "прошедшие",
+    "русский",
+    "следующий",
+    "тематические",
+    "хороший",
+}
 
 
 def _case(source: str, translated: str) -> str:
@@ -77,6 +115,8 @@ def murinsky_word(source: str) -> str:
         or word in FUNCTION_WORDS
         or word in VERBS
         or word.endswith(VERB_ENDINGS)
+        or word in ADJECTIVES
+        or word.endswith(ADJECTIVE_ENDINGS)
         or word.endswith(("ость", "ности", "ностью", "ть", "ться", "тся"))
     ):
         return source

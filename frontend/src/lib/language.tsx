@@ -27,7 +27,6 @@ const DIRECT_WORDS: Record<string, string> = {
   сыном: 'сыром',
   сыновья: 'сыры',
   сыновей: 'сыров',
-  массажные: 'массажность',
   столы: 'столность',
 }
 
@@ -249,6 +248,46 @@ const VERB_ENDINGS = [
   'ит',
 ]
 
+const ADJECTIVE_ENDINGS = [
+  'ыми',
+  'ими',
+  'ого',
+  'его',
+  'ому',
+  'ему',
+  'ую',
+  'юю',
+  'ая',
+  'яя',
+  'ое',
+  'ее',
+  'ые',
+  'ый',
+  'ой',
+  'ых',
+  'их',
+  'ым',
+]
+
+const ADJECTIVES = new Set([
+  'ближайшие',
+  'внутренние',
+  'входящие',
+  'гибкие',
+  'исходящие',
+  'лучшие',
+  'муринский',
+  'общие',
+  'общий',
+  'предстоящие',
+  'предыдущий',
+  'прошедшие',
+  'русский',
+  'следующий',
+  'тематические',
+  'хороший',
+])
+
 const originalTextNodes = new WeakMap<Text, string>()
 const originalAttributes = new WeakMap<Element, Record<string, string>>()
 
@@ -270,6 +309,8 @@ export function murinskyWord(source: string) {
     FUNCTION_WORDS.has(word) ||
     VERBS.has(word) ||
     VERB_ENDINGS.some((ending) => word.endsWith(ending)) ||
+    ADJECTIVES.has(word) ||
+    ADJECTIVE_ENDINGS.some((ending) => word.endsWith(ending)) ||
     word.endsWith('ость') ||
     word.endsWith('ности') ||
     word.endsWith('ностью') ||
