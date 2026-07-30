@@ -3,11 +3,13 @@ import type { CSSProperties, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CalendarDays,
+  Check,
   Clock3,
   LockKeyhole,
   LogIn,
   PartyPopper,
   SearchCheck,
+  Sparkles,
   UserPlus,
   UsersRound,
   WalletCards,
@@ -41,6 +43,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
   )
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [demoPeople, setDemoPeople] = useState([1, 2, 3])
   const title = mode === 'login' ? 'Войти в календарь' : 'Создать аккаунт'
   const actionText = mode === 'login' ? 'Войти' : 'Зарегистрироваться'
   const subtitle = useMemo(
@@ -160,6 +163,81 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             расходов доступны в профиле.
           </p>
         </article>
+      </section>
+
+      <section className="public-demo" aria-label="Интерактивное демо поиска времени">
+        <div className="public-demo__copy">
+          <span>
+            <Sparkles size={17} /> Демо без регистрации
+          </span>
+          <h2>Выберите участников — окно найдётся сразу</h2>
+          <p>
+            Попробуйте убрать кого-нибудь из компании: результат пересчитается прямо на странице.
+          </p>
+        </div>
+        <div className="demo-people">
+          {[
+            ['А', 'Аня', 1],
+            ['М', 'Миша', 2],
+            ['Л', 'Лена', 3],
+          ].map(([letter, name, rawId]) => {
+            const id = Number(rawId)
+            const active = demoPeople.includes(id)
+            return (
+              <button
+                key={id}
+                type="button"
+                className={active ? 'is-active' : ''}
+                onClick={() =>
+                  setDemoPeople((items) =>
+                    active ? items.filter((item) => item !== id) : [...items, id],
+                  )
+                }
+              >
+                <i>{letter}</i>
+                <span>{name}</span>
+                {active && <Check size={14} />}
+              </button>
+            )
+          })}
+        </div>
+        <div className="demo-result">
+          <div className="demo-result__days">
+            {['Пн', 'Вт', 'Ср', 'Чт', 'Пт'].map((day) => (
+              <span
+                key={day}
+                className={
+                  day === (demoPeople.length === 3 ? 'Чт' : demoPeople.length === 2 ? 'Ср' : 'Вт')
+                    ? 'is-active'
+                    : ''
+                }
+              >
+                {day}
+              </span>
+            ))}
+          </div>
+          {demoPeople.length ? (
+            <div className="demo-result__slot">
+              <span>
+                <strong>
+                  {demoPeople.length === 3
+                    ? 'Четверг, 19:00–21:00'
+                    : demoPeople.length === 2
+                      ? 'Среда, 18:30–21:00'
+                      : 'Вторник, 18:00–22:00'}
+                </strong>
+                <small>
+                  {demoPeople.length === 3
+                    ? 'Все трое свободны'
+                    : `${demoPeople.length} участника свободны`}
+                </small>
+              </span>
+              <b>Лучшее окно</b>
+            </div>
+          ) : (
+            <div className="demo-result__empty">Выберите хотя бы одного участника</div>
+          )}
+        </div>
       </section>
 
       <section className="public-preview" aria-label="Как выглядит планирование">

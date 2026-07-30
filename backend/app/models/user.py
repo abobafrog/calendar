@@ -1,12 +1,12 @@
-from datetime import time
+from datetime import datetime, time
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, Enum, String, Time
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, Enum, Integer, String, Time
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
-from app.models.enums import TimeFormat
+from app.models.enums import IntervalVisibility, TimeFormat
 
 if TYPE_CHECKING:
     from app.models.busy_interval import BusyInterval
@@ -39,6 +39,22 @@ class User(TimestampMixin, Base):
     )
     workday_start: Mapped[time] = mapped_column(Time, default=time(9), server_default="09:00:00")
     workday_end: Mapped[time] = mapped_column(Time, default=time(18), server_default="18:00:00")
+    sleep_start: Mapped[time] = mapped_column(Time, default=time(23), server_default="23:00:00")
+    sleep_end: Mapped[time] = mapped_column(Time, default=time(7), server_default="07:00:00")
+    minimum_break_minutes: Mapped[int] = mapped_column(Integer, default=15, server_default="15")
+    undesirable_weekdays: Mapped[list[int]] = mapped_column(JSONB, default=list, server_default="[]")
+    default_visibility: Mapped[IntervalVisibility] = mapped_column(
+        Enum(
+            IntervalVisibility,
+            name="interval_visibility",
+            values_callable=lambda e: [x.value for x in e],
+            create_type=False,
+        ),
+        default=IntervalVisibility.CLOSED,
+        server_default=IntervalVisibility.CLOSED.value,
+    )
+    share_details_with_friends: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    details_access_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     holiday_categories: Mapped[list[str]] = mapped_column(
         JSONB,

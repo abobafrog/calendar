@@ -1,7 +1,7 @@
 import { Bell, Check, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useMarkNotificationRead, useNotifications } from '../api/hooks'
+import { useMarkNotificationRead, useMeetings, useNotifications } from '../api/hooks'
 import type { SiteNotification } from '../lib/types'
 
 const notificationText: Record<string, { title: string; message: string }> = {
@@ -27,6 +27,7 @@ function describe(notification: SiteNotification) {
 
 export function SiteNotifications() {
   const notifications = useNotifications()
+  const meetings = useMeetings()
   const markRead = useMarkNotificationRead()
   const queryClient = useQueryClient()
   const announced = useRef(new Set<number>())
@@ -39,9 +40,49 @@ export function SiteNotifications() {
     setVisible(next)
     const text = describe(next)
     if ('Notification' in window && window.Notification.permission === 'granted') {
-      new window.Notification(text.title, { body: text.message, tag: `timetogether-${next.id}` })
+      if ('serviceWorker' in navigator) {
+        void navigator.serviceWorker.ready.then((registration) =>
+          registration.showNotification(text.title, {
+            body: text.message,
+            tag: `timetogether-${next.id}`,
+            icon: '/icon.svg',
+            data: { url: next.payload.meeting_id ? `/meetings/${next.payload.meeting_id}` : '/' },
+          }),
+        )
+      } else
+        new window.Notification(text.title, { body: text.message, tag: `timetogether-${next.id}` })
     }
   }, [notifications.data])
+
+  useEffect(() => {
+    if (
+      !meetings.data ||
+      !('Notification' in window) ||
+      window.Notification.permission !== 'granted'
+    )
+      return
+    const now = Date.now()
+    for (const meeting of meetings.data) {
+      if (meeting.status === 'cancelled' || !meeting.reminder_minutes) continue
+      const startsIn = new Date(meeting.start_at).getTime() - now
+      const threshold = meeting.reminder_minutes * 60_000
+      const key = `timetogether:reminder:${meeting.id}:${meeting.start_at}`
+      if (startsIn > 0 && startsIn <= threshold && !localStorage.getItem(key)) {
+        localStorage.setItem(key, 'shown')
+        const body = `Начало в ${new Date(meeting.start_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`
+        if ('serviceWorker' in navigator)
+          void navigator.serviceWorker.ready.then((registration) =>
+            registration.showNotification(meeting.title, {
+              body,
+              tag: key,
+              icon: '/icon.svg',
+              data: { url: `/meetings/${meeting.id}` },
+            }),
+          )
+        else new window.Notification(meeting.title, { body, tag: key })
+      }
+    }
+  }, [meetings.data])
 
   async function dismiss(notification: SiteNotification) {
     setVisible(null)

@@ -1,5 +1,6 @@
 import {
   Bell,
+  BedDouble,
   ChevronRight,
   Clock3,
   Copy,
@@ -12,6 +13,7 @@ import {
   LogOut,
   Moon,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   Sun,
   SunMoon,
@@ -19,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
 import { ModalSheet } from '../components/ModalSheet'
@@ -83,6 +86,7 @@ const holidayCategories: {
 ]
 
 export function SettingsPage() {
+  const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const [toast, setToast] = useState<string | null>(null)
   const [sheet, setSheet] = useState<'profile' | 'timezone' | 'workday' | 'format' | null>(null)
@@ -219,6 +223,7 @@ export function SettingsPage() {
           </button>
         </GlassPanel>
       </section>
+      <ComfortSettings user={currentUser} onSave={saveUser} saving={updateUser.isPending} />
       <section className="settings-section">
         <h2>Праздники в календаре</h2>
         <GlassPanel className="settings-list holiday-settings-list">
@@ -265,8 +270,17 @@ export function SettingsPage() {
             />
             <i />
           </label>
+          <button type="button" onClick={() => navigate('/privacy')}>
+            <ShieldCheck size={19} />
+            <span>
+              <strong>Центр приватности</strong>
+              <small>Кто видит детали, временный доступ и режим по умолчанию</small>
+            </span>
+            <ChevronRight size={18} />
+          </button>
         </GlassPanel>
       </section>
+      <InstallAppSection onMessage={setToast} />
       <section className="settings-section">
         <h2>Поддержка проекта</h2>
         <GlassPanel className="donation-panel">
@@ -394,6 +408,157 @@ export function SettingsPage() {
       />
       <Toast message={toast} onClose={() => setToast(null)} />
     </div>
+  )
+}
+
+function ComfortSettings({
+  user,
+  saving,
+  onSave,
+}: {
+  user: User
+  saving: boolean
+  onSave: (payload: Partial<User>, message: string) => Promise<void>
+}) {
+  const [sleepStart, setSleepStart] = useState((user.sleep_start ?? '23:00').slice(0, 5))
+  const [sleepEnd, setSleepEnd] = useState((user.sleep_end ?? '07:00').slice(0, 5))
+  const [minimumBreak, setMinimumBreak] = useState(user.minimum_break_minutes ?? 15)
+  const [undesirable, setUndesirable] = useState(user.undesirable_weekdays ?? [])
+  const labels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+  return (
+    <section className="settings-section comfort-settings">
+      <h2>Комфортное время</h2>
+      <GlassPanel className="form-section">
+        <div className="comfort-heading">
+          <BedDouble size={19} />
+          <span>
+            <strong>Не предлагать во время сна</strong>
+            <small>Учитывается вместе с рабочими часами и занятостью</small>
+          </span>
+        </div>
+        <div className="field-row field-row--three">
+          <label className="field">
+            <span>Сон с</span>
+            <input
+              type="time"
+              value={sleepStart}
+              onChange={(event) => setSleepStart(event.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>До</span>
+            <input
+              type="time"
+              value={sleepEnd}
+              onChange={(event) => setSleepEnd(event.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>Перерыв</span>
+            <select
+              value={minimumBreak}
+              onChange={(event) => setMinimumBreak(Number(event.target.value))}
+            >
+              <option value="0">Нет</option>
+              <option value="10">10 мин</option>
+              <option value="15">15 мин</option>
+              <option value="30">30 мин</option>
+              <option value="60">1 час</option>
+            </select>
+          </label>
+        </div>
+        <div className="form-label comfort-days">
+          <span>Нежелательные дни</span>
+          <small>не попадут в предложения</small>
+        </div>
+        <div className="day-picker">
+          {labels.map((label, index) => {
+            const value = index + 1
+            const active = undesirable.includes(value)
+            return (
+              <button
+                key={label}
+                type="button"
+                className={active ? 'is-active' : ''}
+                onClick={() =>
+                  setUndesirable(
+                    active ? undesirable.filter((item) => item !== value) : [...undesirable, value],
+                  )
+                }
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+        <GlassButton
+          variant="primary"
+          disabled={saving}
+          onClick={() =>
+            void onSave(
+              {
+                sleep_start: sleepStart,
+                sleep_end: sleepEnd,
+                minimum_break_minutes: minimumBreak,
+                undesirable_weekdays: undesirable,
+              },
+              'Комфортное время сохранено',
+            )
+          }
+        >
+          Сохранить комфортное время
+        </GlassButton>
+      </GlassPanel>
+    </section>
+  )
+}
+
+interface InstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
+function InstallAppSection({ onMessage }: { onMessage: (message: string) => void }) {
+  const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null)
+  useEffect(() => {
+    const capture = (event: Event) => {
+      event.preventDefault()
+      setPrompt(event as InstallPromptEvent)
+    }
+    window.addEventListener('beforeinstallprompt', capture)
+    return () => window.removeEventListener('beforeinstallprompt', capture)
+  }, [])
+  return (
+    <section className="settings-section">
+      <h2>Приложение</h2>
+      <GlassPanel className="install-panel">
+        <span>
+          <Smartphone size={22} />
+        </span>
+        <div>
+          <strong>Установить «Время вместе»</strong>
+          <small>Быстрый запуск с домашнего экрана и системные уведомления</small>
+        </div>
+        <GlassButton
+          onClick={async () => {
+            if (!prompt) {
+              onMessage('Откройте меню браузера и выберите «Добавить на главный экран»')
+              return
+            }
+            await prompt.prompt()
+            const choice = await prompt.userChoice
+            onMessage(
+              choice.outcome === 'accepted'
+                ? 'Приложение установлено'
+                : 'Установку можно повторить позже',
+            )
+            setPrompt(null)
+          }}
+        >
+          Установить
+        </GlassButton>
+      </GlassPanel>
+    </section>
   )
 }
 

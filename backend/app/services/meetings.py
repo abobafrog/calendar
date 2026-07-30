@@ -44,6 +44,9 @@ class MeetingService:
             creator_id=actor.id,
             title=data.title,
             description=data.description,
+            location=data.location,
+            meeting_url=data.meeting_url,
+            reminder_minutes=data.reminder_minutes,
             start_at=data.start_at,
             end_at=data.end_at,
             participants=[

@@ -13,15 +13,22 @@ import { BusyCreatePage } from './pages/BusyCreatePage'
 import { BusyEditPage } from './pages/BusyEditPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { FriendsPage } from './pages/FriendsPage'
+import { GroupsPage } from './pages/GroupsPage'
 import { LoginPage } from './pages/LoginPage'
 import { MeetingDetailPage } from './pages/MeetingDetailPage'
 import { MeetingsPage } from './pages/MeetingsPage'
+import { PrivacyPage } from './pages/PrivacyPage'
+import { PublicPollPage } from './pages/PublicPollPage'
+import { SchedulingLinksPage } from './pages/SchedulingLinksPage'
 import { SettingsPage } from './pages/SettingsPage'
 
 export default function App() {
   useTheme()
   const queryClient = useQueryClient()
-  const [session, setSession] = useState<'checking' | 'authenticated' | 'anonymous'>('checking')
+  const isPublicLink = window.location.pathname.startsWith('/join/')
+  const [session, setSession] = useState<'checking' | 'authenticated' | 'anonymous'>(() =>
+    isPublicLink ? 'anonymous' : 'checking',
+  )
   const [sessionMessage, setSessionMessage] = useState('Проверяем сессию…')
 
   useEffect(() => {
@@ -52,6 +59,7 @@ export default function App() {
         })
     }
 
+    if (isPublicLink) return () => undefined
     window.addEventListener(AUTH_REQUIRED_EVENT, requireAuthentication)
     verifySession()
 
@@ -60,7 +68,17 @@ export default function App() {
       window.clearTimeout(retryTimer)
       window.removeEventListener(AUTH_REQUIRED_EVENT, requireAuthentication)
     }
-  }, [queryClient])
+  }, [isPublicLink, queryClient])
+
+  if (isPublicLink) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="join/:token" element={<PublicPollPage />} />
+        </Routes>
+      </BrowserRouter>
+    )
+  }
 
   function handleAuthenticated(auth: AuthResponse) {
     queryClient.setQueryData(['me'], auth.user)
@@ -112,6 +130,9 @@ export default function App() {
           <Route path="friends" element={<FriendsPage />} />
           <Route path="meetings" element={<MeetingsPage />} />
           <Route path="meetings/:id" element={<MeetingDetailPage />} />
+          <Route path="groups" element={<GroupsPage />} />
+          <Route path="scheduling-links" element={<SchedulingLinksPage />} />
+          <Route path="privacy" element={<PrivacyPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>

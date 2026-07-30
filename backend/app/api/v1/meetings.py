@@ -1,3 +1,5 @@
+from datetime import UTC
+
 from app.api.deps import get_redis
 from app.core.rate_limit import RateLimit, enforce_rate_limit
 from app.core.security import get_current_user
@@ -10,6 +12,7 @@ from app.repositories.meetings import MeetingRepository
 from app.schemas.meetings import MeetingCreate, MeetingResponse
 from app.services.meetings import MeetingService
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import Response
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -92,3 +95,55 @@ async def cancel_meeting(
     await enforce_rate_limit(redis, f"rate:meeting-response:{current_user.id}", RateLimit(120, 3600))
     meeting = await MeetingService(session, redis).cancel(current_user, meeting_id)
     return await serialize_meeting(meeting, current_user, session)
+
+
+def _ics_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+
+@router.get("/{meeting_id}/calendar.ics", response_class=Response)
+async def export_meeting_calendar(
+    meeting_id: int,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    from app.core.errors import AppError
+
+    meeting = await MeetingRepository(session).get_for_user(meeting_id, current_user.id)
+    if meeting is None:
+        raise AppError(404, "meeting_not_found", "Встреча не найдена")
+    description_parts = [meeting.description or ""]
+    if meeting.meeting_url:
+        description_parts.append(meeting.meeting_url)
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//TimeTogether//Meeting//RU",
+        "CALSCALE:GREGORIAN",
+        "BEGIN:VEVENT",
+        f"UID:meeting-{meeting.id}@timetogether",
+        f"DTSTAMP:{meeting.created_at.astimezone(UTC).strftime('%Y%m%dT%H%M%SZ')}",
+        f"DTSTART:{meeting.start_at.astimezone(UTC).strftime('%Y%m%dT%H%M%SZ')}",
+        f"DTEND:{meeting.end_at.astimezone(UTC).strftime('%Y%m%dT%H%M%SZ')}",
+        f"SUMMARY:{_ics_escape(meeting.title)}",
+    ]
+    if any(description_parts):
+        lines.append(f"DESCRIPTION:{_ics_escape(chr(10).join(filter(None, description_parts)))}")
+    if meeting.location:
+        lines.append(f"LOCATION:{_ics_escape(meeting.location)}")
+    if meeting.reminder_minutes > 0:
+        lines.extend(
+            [
+                "BEGIN:VALARM",
+                f"TRIGGER:-PT{meeting.reminder_minutes}M",
+                "ACTION:DISPLAY",
+                f"DESCRIPTION:{_ics_escape(meeting.title)}",
+                "END:VALARM",
+            ]
+        )
+    lines.extend(["END:VEVENT", "END:VCALENDAR", ""])
+    return Response(
+        "\r\n".join(lines),
+        media_type="text/calendar; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="meeting-{meeting.id}.ics"'},
+    )

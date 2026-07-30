@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
@@ -115,6 +116,39 @@ def find_common_free_slots(
     ]
 
 
+def intersect_spans(left: list[TimeSpan], right: list[TimeSpan]) -> list[TimeSpan]:
+    """Return the overlap of two ordered collections of time spans."""
+    overlaps: list[TimeSpan] = []
+    for first in left:
+        for second in right:
+            start_at = max(first.start_at, second.start_at)
+            end_at = min(first.end_at, second.end_at)
+            if start_at < end_at:
+                overlaps.append(TimeSpan(start_at, end_at))
+    return merge_spans(overlaps)
+
+
+def build_comfort_windows(user: User, date_from: date, date_to: date) -> list[TimeSpan]:
+    """Build awake local-time windows, excluding explicitly undesirable weekdays."""
+    timezone = ZoneInfo(user.timezone)
+    windows: list[TimeSpan] = []
+    day = date_from - timedelta(days=1)
+    last_day = date_to + timedelta(days=1)
+    undesirable = set(user.undesirable_weekdays or [])
+    while day <= last_day:
+        if day.isoweekday() not in undesirable:
+            local_start = datetime.combine(day, user.sleep_end)
+            local_end = datetime.combine(day, user.sleep_start)
+            if local_end <= local_start:
+                local_end += timedelta(days=1)
+            start_at = _valid_local_to_utc(local_start, timezone, prefer_late=False)
+            end_at = _valid_local_to_utc(local_end, timezone, prefer_late=True)
+            if start_at < end_at:
+                windows.append(TimeSpan(start_at, end_at))
+        day += timedelta(days=1)
+    return windows
+
+
 class AvailabilityService:
     def __init__(self, session: AsyncSession, settings: Settings) -> None:
         self.session = session
@@ -136,6 +170,8 @@ class AvailabilityService:
                     "В поиск времени можно добавлять только принятых друнов",
                 )
 
+        users = list(await self.session.scalars(select(User).where(User.id.in_(participant_ids))))
+
         windows = build_allowed_windows(
             data.date_from,
             data.date_to,
@@ -147,10 +183,24 @@ class AvailabilityService:
         )
         if not windows:
             return AvailabilitySearchResponse(timezone=data.timezone, participants=participant_ids, slots=[])
+        for user in users:
+            windows = intersect_spans(
+                windows,
+                build_comfort_windows(user, data.date_from, data.date_to),
+            )
+            if not windows:
+                return AvailabilitySearchResponse(timezone=data.timezone, participants=participant_ids, slots=[])
         busy = await self.calendar.list_range(participant_ids, windows[0].start_at, windows[-1].end_at)
+        breaks = {user.id: timedelta(minutes=user.minimum_break_minutes) for user in users}
         slots = find_common_free_slots(
             windows,
-            [TimeSpan(item.start_at, item.end_at) for item in busy],
+            [
+                TimeSpan(
+                    item.start_at - breaks.get(item.user_id, timedelta()),
+                    item.end_at + breaks.get(item.user_id, timedelta()),
+                )
+                for item in busy
+            ],
             timedelta(minutes=data.minimum_duration_minutes),
         )
         return AvailabilitySearchResponse(

@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, Check, Pencil, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, Download, Link2, MapPin, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { GlassButton } from '../components/GlassButton'
@@ -24,9 +24,14 @@ export function MeetingDetailPage() {
           <ArrowLeft size={21} />
         </GlassButton>
         <h1>Детали встречи</h1>
-        <GlassButton variant="icon" aria-label="Редактировать">
-          <Pencil size={18} />
-        </GlassButton>
+        <a
+          className="glass-button glass-button--icon"
+          href={`/api/v1/meetings/${meeting.id}/calendar.ics`}
+          download
+          aria-label="Добавить в календарь"
+        >
+          <Download size={18} />
+        </a>
       </header>
       <GlassPanel className="meeting-hero">
         <span>
@@ -38,6 +43,20 @@ export function MeetingDetailPage() {
           {end.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
         </strong>
         {meeting.description && <p>{meeting.description}</p>}
+        {meeting.location && (
+          <p className="meeting-meta">
+            <MapPin size={15} /> {meeting.location}
+          </p>
+        )}
+        {meeting.meeting_url && (
+          <a className="meeting-meta" href={meeting.meeting_url} target="_blank" rel="noreferrer">
+            <Link2 size={15} /> Подключиться к встрече
+          </a>
+        )}
+        <p className="meeting-meta">
+          Напоминание:{' '}
+          {meeting.reminder_minutes ? `за ${meeting.reminder_minutes} мин` : 'выключено'}
+        </p>
       </GlassPanel>
       {meeting.has_conflict && (
         <div className="conflict-banner">

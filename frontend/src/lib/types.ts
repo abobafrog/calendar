@@ -18,6 +18,13 @@ export interface User {
   time_format?: '12h' | '24h'
   workday_start?: string
   workday_end?: string
+  sleep_start?: string
+  sleep_end?: string
+  minimum_break_minutes?: number
+  undesirable_weekdays?: number[]
+  default_visibility?: Visibility
+  share_details_with_friends?: boolean
+  details_access_until?: string | null
   notifications_enabled?: boolean
   holiday_categories?: HolidayCategory[]
 }
@@ -84,6 +91,9 @@ export interface Meeting {
   creator_id: number
   title: string
   description: string | null
+  location: string | null
+  meeting_url: string | null
+  reminder_minutes: number
   start_at: string
   end_at: string
   status: MeetingStatus
@@ -108,5 +118,40 @@ export interface SiteNotification {
   type: string
   payload: Record<string, unknown>
   read_at: string | null
+  created_at: string
+}
+
+export interface PlanningGroup {
+  id: number
+  owner_id: number
+  name: string
+  duration_minutes: number
+  preferred_start: string
+  preferred_end: string
+  members: User[]
+  created_at: string
+}
+
+export interface PollOption {
+  id: number
+  start_at: string
+  end_at: string
+  yes: number
+  maybe: number
+  no: number
+  score: number
+}
+
+export interface SchedulingPoll {
+  id: number
+  token: string
+  title: string
+  creator: User
+  timezone: string
+  duration_minutes: number
+  status: 'open' | 'finalized'
+  finalized_option_id: number | null
+  voters: string[]
+  options: PollOption[]
   created_at: string
 }

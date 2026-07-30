@@ -33,6 +33,9 @@ class MeetingProposal(TimestampMixin, Base):
     creator_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text)
+    location: Mapped[str | None] = mapped_column(String(300))
+    meeting_url: Mapped[str | None] = mapped_column(String(2048))
+    reminder_minutes: Mapped[int] = mapped_column(default=30, server_default="30")
     start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     status: Mapped[MeetingStatus] = mapped_column(

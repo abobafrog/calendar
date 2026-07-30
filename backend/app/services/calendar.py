@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -102,9 +102,19 @@ class CalendarService:
         await self.permissions.require_calendar_access(actor.id, owner_id)
         intervals = await self.repository.list_range([owner_id], start_at, end_at)
         is_owner = actor.id == owner_id
+        session = getattr(self, "session", None)
+        owner = await session.get(User, owner_id) if session is not None else None
+        details_visible = (
+            True
+            if owner is None
+            else bool(
+                owner.share_details_with_friends
+                or (owner.details_access_until and owner.details_access_until > datetime.now(UTC))
+            )
+        )
         visible: list[FriendBusyInterval] = []
         for item in intervals:
-            title = item.title if is_owner or item.visibility == IntervalVisibility.OPEN else None
+            title = item.title if is_owner or (details_visible and item.visibility == IntervalVisibility.OPEN) else None
             response_visibility = item.visibility
             visible.append(
                 FriendBusyInterval(

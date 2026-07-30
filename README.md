@@ -1,6 +1,16 @@
 # TimeTogether
 
-TimeTogether is a web MVP for private collaborative scheduling. Users sign up with a username/password, add busy intervals, connect with friends, find common free slots and propose meetings.
+TimeTogether is a private collaborative scheduling app. Users can add busy intervals, connect with friends, find common free slots, keep reusable groups, collect guest availability through a public link and turn the result into a confirmed meeting.
+
+## Planning Features
+
+- Public scheduling links work without participant registration and rank `yes / maybe / no` votes.
+- Selected windows become meetings with a location, call link, participant confirmation, reminder and `.ics` export.
+- Reusable groups store members, usual duration and preferred hours; smart suggestions scan the next week.
+- Comfort settings exclude sleep, undesirable weekdays and buffers around existing events.
+- The privacy center explains visibility and supports hidden details, a 24-hour temporary grant and a private default.
+- The frontend is installable as a PWA and delivers system notifications through its service worker.
+- The public home page includes an interactive three-person scheduling demo.
 
 ## Local Run
 

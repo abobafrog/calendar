@@ -63,6 +63,13 @@ async def update_me(
         "time_format",
         "workday_start",
         "workday_end",
+        "sleep_start",
+        "sleep_end",
+        "minimum_break_minutes",
+        "undesirable_weekdays",
+        "default_visibility",
+        "share_details_with_friends",
+        "details_access_until",
         "notifications_enabled",
         "holiday_categories",
     }
@@ -75,6 +82,8 @@ async def update_me(
         raise AppError(409, "username_already_taken", "Этот логин уже занят")
     if "holiday_categories" in payload.model_fields_set and payload.holiday_categories is None:
         raise AppError(422, "invalid_holiday_categories", "Нужно передать список категорий праздников")
+    if "undesirable_weekdays" in payload.model_fields_set and payload.undesirable_weekdays is None:
+        raise AppError(422, "invalid_undesirable_weekdays", "Нужно передать список нежелательных дней")
     for field_name in payload.model_fields_set & allowed_fields:
         value = getattr(payload, field_name)
         if field_name == "username" and isinstance(value, str):

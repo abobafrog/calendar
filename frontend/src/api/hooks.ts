@@ -9,6 +9,8 @@ import type {
   Meeting,
   PaymentRecord,
   PaymentSummary,
+  PlanningGroup,
+  SchedulingPoll,
   SiteNotification,
   User,
   UserCalendar,
@@ -209,10 +211,65 @@ export function useCreateMeeting() {
     mutationFn: (payload: {
       title: string
       description?: string
+      location?: string
+      meeting_url?: string
+      reminder_minutes?: number
       start_at: string
       end_at: string
       participant_ids: number[]
     }) => apiRequest<Meeting>('/meetings', { method: 'POST', body: JSON.stringify(payload) }),
+  })
+}
+
+export function useGroups() {
+  return useQuery({ queryKey: ['groups'], queryFn: () => apiRequest<PlanningGroup[]>('/groups') })
+}
+
+export function useCreateGroup() {
+  return useMutation({
+    mutationFn: (payload: {
+      name: string
+      member_ids: number[]
+      duration_minutes: number
+      preferred_start: string
+      preferred_end: string
+    }) => apiRequest<PlanningGroup>('/groups', { method: 'POST', body: JSON.stringify(payload) }),
+  })
+}
+
+export function useGroupSuggestions(groupId: number | null) {
+  return useQuery({
+    enabled: Boolean(groupId),
+    queryKey: ['groups', groupId, 'suggestions'],
+    queryFn: () =>
+      apiRequest<{ group: PlanningGroup; suggestions: FreeSlotData[] }>(
+        `/groups/${groupId}/suggestions`,
+      ),
+  })
+}
+
+export function useSchedulingLinks() {
+  return useQuery({
+    queryKey: ['scheduling-links'],
+    queryFn: () => apiRequest<SchedulingPoll[]>('/scheduling-links'),
+  })
+}
+
+export function useCreateSchedulingLink() {
+  return useMutation({
+    mutationFn: (payload: {
+      title: string
+      date_from: string
+      date_to: string
+      timezone: string
+      duration_minutes: number
+      daily_start: string
+      daily_end: string
+    }) =>
+      apiRequest<SchedulingPoll>('/scheduling-links', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
   })
 }
 

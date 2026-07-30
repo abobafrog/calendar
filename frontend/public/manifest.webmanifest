@@ -1,0 +1,26 @@
+{
+  "name": "Время вместе",
+  "short_name": "Вместе",
+  "description": "Приватный поиск общего времени и встречи без долгих переписок",
+  "lang": "ru",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#14131a",
+  "theme_color": "#6558f4",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Найти время",
+      "url": "/availability",
+      "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Создать ссылку",
+      "url": "/scheduling-links",
+      "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiRequest } from '../api/client'
+import { useCurrentUser } from '../api/hooks'
 import { DateSwitcher } from '../components/DateSwitcher'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
@@ -23,12 +24,15 @@ type TimeBlock = { start: string; end: string }
 export function BusyCreatePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const currentUser = useCurrentUser()
   const today = toLocalDateKey(new Date())
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(today)
   const [blocks, setBlocks] = useState<TimeBlock[]>([{ start: '10:00', end: '11:00' }])
   const [days, setDays] = useState<number[]>([fromLocalDateKey(today).getDay() || 7])
-  const [visibility, setVisibility] = useState<Visibility>('open')
+  const [visibility, setVisibility] = useState<Visibility>(
+    () => currentUser.data?.default_visibility ?? 'closed',
+  )
   const [saving, setSaving] = useState(false)
   const [paymentOpen, setPaymentOpen] = useState(false)
   const selectedDate = fromLocalDateKey(date)

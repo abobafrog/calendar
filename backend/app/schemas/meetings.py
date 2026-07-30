@@ -10,6 +10,9 @@ from app.schemas.users import UserSummary
 class MeetingCreate(DateRangeMixin):
     title: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
+    location: str | None = Field(default=None, max_length=300)
+    meeting_url: str | None = Field(default=None, max_length=2048)
+    reminder_minutes: int = Field(default=30, ge=0, le=10080)
     participant_ids: list[int] = Field(min_length=1, max_length=20)
 
     @model_validator(mode="after")
@@ -33,6 +36,9 @@ class MeetingResponse(APIModel):
     creator_id: int
     title: str
     description: str | None
+    location: str | None
+    meeting_url: str | None
+    reminder_minutes: int
     start_at: datetime
     end_at: datetime
     status: MeetingStatus

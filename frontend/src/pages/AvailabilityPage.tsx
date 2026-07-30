@@ -1,6 +1,6 @@
 import { ArrowLeft, CalendarRange, Clock3, Search, Sparkles } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { FriendSelector } from '../components/FriendSelector'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
@@ -15,10 +15,20 @@ const weekDayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 export function AvailabilityPage() {
   const navigate = useNavigate()
-  const [selected, setSelected] = useState<number[]>([])
-  const [searched, setSearched] = useState(false)
+  const location = useLocation()
+  const initialState = location.state as {
+    participantIds?: number[]
+    slot?: FreeSlotData
+    title?: string
+  } | null
+  const [selected, setSelected] = useState<number[]>(initialState?.participantIds ?? [])
+  const [searched, setSearched] = useState(Boolean(initialState?.slot))
   const [chosen, setChosen] = useState<FreeSlotData | null>(null)
-  const [meetingTitle, setMeetingTitle] = useState('')
+  const [meetingTitle, setMeetingTitle] = useState(initialState?.title ?? '')
+  const [meetingDescription, setMeetingDescription] = useState('')
+  const [meetingLocation, setMeetingLocation] = useState('')
+  const [meetingUrl, setMeetingUrl] = useState('')
+  const [reminderMinutes, setReminderMinutes] = useState(30)
   const [toast, setToast] = useState<string | null>(null)
   const [dailyStart, setDailyStart] = useState('10:00')
   const [dailyEnd, setDailyEnd] = useState('22:00')
@@ -32,7 +42,9 @@ export function AvailabilityPage() {
   const userTimezone = currentUserQuery.data?.timezone ?? 'UTC'
   const friendsQuery = useFriends()
   const availableFriends = friendsQuery.data ?? []
-  const [resultSlots, setResultSlots] = useState<FreeSlotData[]>([])
+  const [resultSlots, setResultSlots] = useState<FreeSlotData[]>(
+    initialState?.slot ? [initialState.slot] : [],
+  )
   const [{ today: initialToday, later: initialLater }] = useState(() => {
     const start = new Date()
     const end = new Date(start)
@@ -235,6 +247,46 @@ export function AvailabilityPage() {
               placeholder="Название встречи"
             />
           </label>
+          <label className="field">
+            <span>Описание</span>
+            <input
+              value={meetingDescription}
+              onChange={(event) => setMeetingDescription(event.target.value)}
+              placeholder="Повестка или важные детали"
+            />
+          </label>
+          <div className="field-row field-row--two">
+            <label className="field">
+              <span>Место</span>
+              <input
+                value={meetingLocation}
+                onChange={(event) => setMeetingLocation(event.target.value)}
+                placeholder="Кафе или офис"
+              />
+            </label>
+            <label className="field">
+              <span>Ссылка</span>
+              <input
+                type="url"
+                value={meetingUrl}
+                onChange={(event) => setMeetingUrl(event.target.value)}
+                placeholder="https://meet…"
+              />
+            </label>
+          </div>
+          <label className="field">
+            <span>Напоминание</span>
+            <select
+              value={reminderMinutes}
+              onChange={(event) => setReminderMinutes(Number(event.target.value))}
+            >
+              <option value="0">Не напоминать</option>
+              <option value="10">За 10 минут</option>
+              <option value="30">За 30 минут</option>
+              <option value="60">За час</option>
+              <option value="1440">За день</option>
+            </select>
+          </label>
           {chosen && (
             <div className="selected-slot">
               <Clock3 size={18} />
@@ -254,6 +306,10 @@ export function AvailabilityPage() {
               try {
                 await createMeeting.mutateAsync({
                   title: meetingTitle.trim(),
+                  description: meetingDescription.trim() || undefined,
+                  location: meetingLocation.trim() || undefined,
+                  meeting_url: meetingUrl.trim() || undefined,
+                  reminder_minutes: reminderMinutes,
                   start_at: chosen.start_at,
                   end_at: chosen.end_at,
                   participant_ids: selected,
