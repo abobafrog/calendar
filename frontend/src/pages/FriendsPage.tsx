@@ -88,7 +88,7 @@ export function FriendsPage() {
           className={tab === 'outgoing' ? 'is-active' : ''}
           onClick={() => setTab('outgoing')}
         >
-          Исходящие
+          Исходящие <i>{outgoingRequests.length}</i>
         </button>
       </div>
       {tab === 'friends' && (
@@ -292,17 +292,33 @@ export function FriendsPage() {
         </section>
       )}
       {tab === 'outgoing' && (
-        <div className="empty-state">
-          <div>
-            <Search size={26} />
-          </div>
-          <h2>
-            {outgoingRequests.length
-              ? `Ожидающих запросов: ${outgoingRequests.length}`
-              : 'Нет ожидающих запросов'}
-          </h2>
-          <p>Поиск показывает до шести совпадений по логину.</p>
-        </div>
+        <section className="list-section outgoing-requests">
+          <h2>Отправленные приглашения</h2>
+          {outgoingRequests.length ? (
+            <div className="people-list">
+              {outgoingRequests.map((request) => (
+                <article key={request.id} className="person-row">
+                  <UserAvatar user={request.user} />
+                  <div>
+                    <strong>
+                      {`${request.user.first_name} ${request.user.last_name ?? ''}`.trim()}
+                    </strong>
+                    <span>@{request.user.username}</span>
+                  </div>
+                  <span className="request-status">Ожидает ответа</span>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <div>
+                <Search size={26} />
+              </div>
+              <h2>Нет ожидающих запросов</h2>
+              <p>Отправленные приглашения появятся здесь.</p>
+            </div>
+          )}
+        </section>
       )}
       <Toast message={toast} onClose={() => setToast(null)} />
       <ModalSheet

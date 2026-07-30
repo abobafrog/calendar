@@ -43,7 +43,7 @@ export function CalendarPage() {
   const dayIntervals = useMemo(
     () =>
       shownIntervals
-        .filter((interval) => new Date(interval.start_at).toDateString() === date.toDateString())
+        .filter((interval) => overlapsDay(interval, date))
         .sort(
           (left, right) => new Date(left.start_at).getTime() - new Date(right.start_at).getTime(),
         ),

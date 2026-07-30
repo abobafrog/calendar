@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BusyInterval } from '../lib/types'
-import { layoutOverlappingIntervals } from '../lib/calendarLayout'
+import { calendarDisplayHours, layoutOverlappingIntervals } from '../lib/calendarLayout'
 
 function interval(id: number, userId: number, start: string, end: string): BusyInterval {
   return {
@@ -41,5 +41,23 @@ describe('раскладка пересекающихся дел', () => {
     expect(result[0].startAt.toISOString()).toBe(
       new Date('2026-07-29T08:00:00+03:00').toISOString(),
     )
+  })
+
+  it('расширяет сетку для ранних и поздних дел', () => {
+    const result = calendarDisplayHours(
+      [interval(1, 1, '06:15', '07:00'), interval(2, 1, '21:00', '23:30')],
+      [new Date('2026-07-29T12:00:00+03:00')],
+    )
+
+    expect(result).toEqual({ startHour: 6, endHour: 24 })
+  })
+
+  it('оставляет удобный дневной диапазон, когда дел вне него нет', () => {
+    const result = calendarDisplayHours(
+      [interval(1, 1, '10:00', '12:00')],
+      [new Date('2026-07-29T12:00:00+03:00')],
+    )
+
+    expect(result).toEqual({ startHour: 8, endHour: 20 })
   })
 })

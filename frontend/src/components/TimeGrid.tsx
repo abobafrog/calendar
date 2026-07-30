@@ -1,40 +1,39 @@
 import type { BusyInterval } from '../lib/types'
 import { colorForUser } from '../lib/colors'
-import { layoutOverlappingIntervals } from '../lib/calendarLayout'
+import { calendarDisplayHours, layoutOverlappingIntervals } from '../lib/calendarLayout'
 import { formatLocalClockTime, type TimeFormat } from '../lib/time'
 import { BusyBlock } from './BusyBlock'
 import { FreeSlot } from './FreeSlot'
 
-const START_HOUR = 8
-const END_HOUR = 20
-const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, index) => START_HOUR + index)
-
-function visibleRange(day: Date) {
+function visibleRange(day: Date, startHour: number, endHour: number) {
   const start = new Date(day)
-  start.setHours(START_HOUR, 0, 0, 0)
+  start.setHours(startHour, 0, 0, 0)
   const end = new Date(day)
-  end.setHours(END_HOUR, 0, 0, 0)
+  end.setHours(endHour, 0, 0, 0)
   return { start, end }
 }
 
-function percent(date: Date) {
+function percent(date: Date, rangeStart: Date, rangeEnd: Date) {
   return (
-    (((date.getHours() - START_HOUR) * 60 + date.getMinutes()) / ((END_HOUR - START_HOUR) * 60)) *
-    100
+    ((date.getTime() - rangeStart.getTime()) / (rangeEnd.getTime() - rangeStart.getTime())) * 100
   )
 }
 
-function timeLabels(timeFormat: TimeFormat) {
-  return HOURS.map((hour) => (
-    <span key={hour} style={{ top: `${((hour - START_HOUR) / (END_HOUR - START_HOUR)) * 100}%` }}>
+function hoursBetween(startHour: number, endHour: number) {
+  return Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index)
+}
+
+function timeLabels(timeFormat: TimeFormat, startHour: number, endHour: number) {
+  return hoursBetween(startHour, endHour).map((hour) => (
+    <span key={hour} style={{ top: `${((hour - startHour) / (endHour - startHour)) * 100}%` }}>
       {formatLocalClockTime(`${String(hour).padStart(2, '0')}:00`, timeFormat)}
     </span>
   ))
 }
 
-function gridLines() {
-  return HOURS.map((hour) => (
-    <i key={hour} style={{ top: `${((hour - START_HOUR) / (END_HOUR - START_HOUR)) * 100}%` }} />
+function gridLines(startHour: number, endHour: number) {
+  return hoursBetween(startHour, endHour).map((hour) => (
+    <i key={hour} style={{ top: `${((hour - startHour) / (endHour - startHour)) * 100}%` }} />
   ))
 }
 
@@ -62,12 +61,13 @@ export function TimeGrid({
       item.setDate(monday.getDate() + index)
       return item
     })
+    const { startHour, endHour } = calendarDisplayHours(intervals, days)
     return (
       <div className="time-grid time-grid--week" aria-label="Недельная календарная сетка">
-        <div className="time-grid__labels">{timeLabels(timeFormat)}</div>
+        <div className="time-grid__labels">{timeLabels(timeFormat, startHour, endHour)}</div>
         <div className="time-grid__week-canvas">
           {days.map((day) => {
-            const range = visibleRange(day)
+            const range = visibleRange(day, startHour, endHour)
             const dayIntervals = layoutOverlappingIntervals(intervals, range.start, range.end)
             return (
               <div className="week-column" key={day.toISOString()}>
@@ -76,10 +76,10 @@ export function TimeGrid({
                   <strong>{day.getDate()}</strong>
                 </header>
                 <div className="week-column__body">
-                  {gridLines()}
+                  {gridLines(startHour, endHour)}
                   {dayIntervals.map(({ interval, startAt, endAt, lane, laneCount }) => {
-                    const top = percent(startAt)
-                    const bottom = percent(endAt)
+                    const top = percent(startAt, range.start, range.end)
+                    const bottom = percent(endAt, range.start, range.end)
                     return (
                       <BusyBlock
                         key={interval.id}
@@ -103,17 +103,18 @@ export function TimeGrid({
       </div>
     )
   }
-  const range = visibleRange(date)
+  const { startHour, endHour } = calendarDisplayHours(intervals, [date])
+  const range = visibleRange(date, startHour, endHour)
   const sameDay = layoutOverlappingIntervals(intervals, range.start, range.end)
   return (
     <div className="time-grid" aria-label="Календарная сетка">
-      <div className="time-grid__labels">{timeLabels(timeFormat)}</div>
+      <div className="time-grid__labels">{timeLabels(timeFormat, startHour, endHour)}</div>
       <div className="time-grid__canvas">
-        {gridLines()}
+        {gridLines(startHour, endHour)}
         {showFree && <FreeSlot top={46} height={12} />}
         {sameDay.map(({ interval, startAt, endAt, lane, laneCount }) => {
-          const top = percent(startAt)
-          const bottom = percent(endAt)
+          const top = percent(startAt, range.start, range.end)
+          const bottom = percent(endAt, range.start, range.end)
           return (
             <BusyBlock
               key={interval.id}
@@ -131,7 +132,9 @@ export function TimeGrid({
         })}
         <div
           className="time-grid__now"
-          style={{ top: `${Math.min(100, Math.max(0, percent(new Date())))}%` }}
+          style={{
+            top: `${Math.min(100, Math.max(0, percent(new Date(), range.start, range.end)))}%`,
+          }}
         />
       </div>
     </div>
