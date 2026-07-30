@@ -56,6 +56,7 @@ async def create_interval(
     service = CalendarService(session)
     interval = await service.create(current_user, payload)
     await session.commit()
+    await session.refresh(interval)
     return BusyIntervalResponse.model_validate(interval)
 
 

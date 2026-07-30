@@ -83,6 +83,7 @@ class CalendarService:
             current.end_at = max([end_at, *(item.end_at for item in touching)])
             await self.repository.delete_many([item.id for item in touching])
         await self.session.commit()
+        await self.session.refresh(current)
         return current
 
     async def delete(self, actor: User, interval_id: int) -> None:

@@ -71,6 +71,7 @@ class FriendshipService:
             {"friendship_id": relation.id},
         )
         await self.session.commit()
+        await self.session.refresh(relation)
         return relation
 
     async def remove_friend(self, actor: User, friend_id: int) -> None:
@@ -99,6 +100,7 @@ class FriendshipService:
             relation.status = FriendshipStatus.BLOCKED
             relation.blocked_by_id = actor.id
         await self.session.commit()
+        await self.session.refresh(relation)
         return relation
 
     async def set_alias(self, actor: User, target_id: int, alias: str | None) -> Friendship:

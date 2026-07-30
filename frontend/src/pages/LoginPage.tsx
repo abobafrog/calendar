@@ -263,15 +263,13 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               placeholder="••••••••"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              minLength={mode === 'register' ? 12 : 1}
+              minLength={mode === 'register' ? 4 : 1}
               required
             />
           </label>
 
           {mode === 'register' && (
-            <p className="auth-hint">
-              Примеры: имя «Тимофей», фамилия «Иванов», логин «tima_schedule».
-            </p>
+            <p className="auth-hint">Пароль — от 4 символов. Пример логина: «tima_schedule».</p>
           )}
 
           {error && <p className="auth-error">{error}</p>}

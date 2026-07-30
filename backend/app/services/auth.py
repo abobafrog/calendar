@@ -76,6 +76,7 @@ class AuthService:
         if password_needs_rehash(user.password_hash):
             user.password_hash = hash_password(payload.password)
             await self.session.commit()
+            await self.session.refresh(user)
         token, expires_at = create_access_token(user.id, self.settings)
         return AuthResponse(expires_at=expires_at, user=UserResponse.model_validate(user)), token
 
