@@ -28,7 +28,10 @@ def upgrade() -> None:
         WHERE users.id = ranked.id AND ranked.position > 1
         """
     )
-    op.execute("CREATE UNIQUE INDEX uq_users_username_lower ON users (LOWER(username)) WHERE username IS NOT NULL")
+    op.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS uq_users_username_lower "
+        "ON users (LOWER(username)) WHERE username IS NOT NULL"
+    )
 
 
 def downgrade() -> None:
