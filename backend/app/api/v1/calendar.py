@@ -1,4 +1,6 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time
+from typing import Literal
+from zoneinfo import ZoneInfo
 
 from app.api.deps import get_redis
 from app.core.config import Settings, get_settings
@@ -7,6 +9,7 @@ from app.core.rate_limit import RateLimit, enforce_rate_limit
 from app.core.security import get_current_user
 from app.db.session import get_session
 from app.models.user import User
+from app.repositories.calendar import CalendarRepository
 from app.repositories.friendships import FriendshipRepository
 from app.schemas.calendar import (
     BusyIntervalBulkCreate,
@@ -19,11 +22,34 @@ from app.schemas.calendar import (
 from app.schemas.users import UserSummary
 from app.services.calendar import CalendarService
 from app.services.payments import PaymentService
+from app.services.schedule_pdf import build_schedule_pdf, schedule_range
 from fastapi import APIRouter, Depends, Query, Response, status
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/calendar", tags=["calendar"])
+
+
+@router.get("/export.pdf", response_class=Response)
+async def export_calendar_pdf(
+    view: Literal["week", "month"] = Query(),
+    anchor: date = Query(),
+    language: Literal["mur", "ru"] = Query(default="mur"),
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    start, end = schedule_range(anchor, view)
+    timezone = ZoneInfo(current_user.timezone)
+    start_at = datetime.combine(start, time.min, tzinfo=timezone).astimezone(UTC)
+    end_at = datetime.combine(end, time.min, tzinfo=timezone).astimezone(UTC)
+    intervals = await CalendarRepository(session).list_range([current_user.id], start_at, end_at)
+    content = build_schedule_pdf(current_user, intervals, start, end, view, language)
+    filename = f"schedule-{view}-{start.isoformat()}.pdf"
+    return Response(
+        content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 def validate_range(start_at: datetime, end_at: datetime, settings: Settings) -> tuple[datetime, datetime]:
@@ -127,7 +153,7 @@ async def friends_calendars(
     friends = {user.id: user for _, user in friend_pairs}
     requested = set(user_ids)
     if not requested.issubset(friends.keys()):
-        raise AppError(403, "calendar_access_denied", "Все выбранные пользователи должны быть друнами")
+        raise AppError(403, "calendar_access_denied", "Все выбранные пользователи должны быть друзьями")
     service = CalendarService(session)
     return [
         UserCalendar(

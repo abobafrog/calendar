@@ -15,7 +15,7 @@ class PermissionService:
         if actor_id == owner_id:
             return
         if not await self.friendships.is_friend(actor_id, owner_id):
-            raise AppError(403, "calendar_access_denied", "Календарь доступен только друнам")
+            raise AppError(403, "calendar_access_denied", "Календарь доступен только друзьям")
 
     @staticmethod
     def require_interval_owner(actor: User, interval: BusyInterval) -> None:

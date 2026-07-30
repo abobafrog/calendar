@@ -10,6 +10,7 @@ import {
   HandHeart,
   Heart,
   History,
+  Languages,
   LogOut,
   Moon,
   ShieldCheck,
@@ -40,6 +41,7 @@ import { formatLocalClockTime } from '../lib/time'
 import { timezoneLabel, timezoneOptionsWithCurrent } from '../lib/timezones'
 import type { HolidayCategory, ThemeMode, User } from '../lib/types'
 import { signOut } from '../api/client'
+import { useLanguage } from '../lib/language'
 
 const themes: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: 'light', label: 'Светлая', icon: Sun },
@@ -87,6 +89,7 @@ const holidayCategories: {
 
 export function SettingsPage() {
   const navigate = useNavigate()
+  const { language, setLanguage } = useLanguage()
   const { theme, setTheme } = useTheme()
   const [toast, setToast] = useState<string | null>(null)
   const [sheet, setSheet] = useState<'profile' | 'timezone' | 'workday' | 'format' | null>(null)
@@ -172,6 +175,26 @@ export function SettingsPage() {
           </GlassButton>
         </div>
       </GlassPanel>
+      <section className="settings-section" data-no-translate>
+        <h2>Язык / Языкность</h2>
+        <GlassPanel className="language-selector">
+          <Languages size={20} />
+          <button
+            type="button"
+            className={language === 'mur' ? 'is-active' : ''}
+            onClick={() => setLanguage('mur')}
+          >
+            Муринский
+          </button>
+          <button
+            type="button"
+            className={language === 'ru' ? 'is-active' : ''}
+            onClick={() => setLanguage('ru')}
+          >
+            Русский
+          </button>
+        </GlassPanel>
+      </section>
       <section className="settings-section">
         <h2>Оформление</h2>
         <div className="theme-selector">
@@ -374,7 +397,7 @@ export function SettingsPage() {
         </GlassPanel>
       </section>
       <p className="settings-note">
-        Доступ к календарю есть только у принятых друнов. Если показ деталей включён, они увидят
+        Доступ к календарю есть только у принятых друзей. Если показ деталей включён, они увидят
         название дела; иначе — только статус «Занят».
       </p>
       <SettingsSheet

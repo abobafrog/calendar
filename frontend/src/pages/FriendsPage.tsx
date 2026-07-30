@@ -66,7 +66,7 @@ export function FriendsPage() {
       <header className="page-header">
         <div>
           <span className="eyebrow">Связи</span>
-          <h1>Друны</h1>
+          <h1>Друзья</h1>
         </div>
         <span className="number-badge">{visibleFriends.length}</span>
       </header>
@@ -155,7 +155,7 @@ export function FriendsPage() {
             </div>
           )}
           <section className="list-section">
-            <h2>Мои друны</h2>
+            <h2>Мои друзья</h2>
             <div className="people-list">
               {visibleFriends.map((friend) => (
                 <article key={friend.id} className="person-row">
@@ -169,10 +169,10 @@ export function FriendsPage() {
                   <div className="row-actions">
                     <button
                       type="button"
-                      aria-label="Переименовать друна"
+                      aria-label="Переименовать друга"
                       onClick={async () => {
                         const next = window.prompt(
-                          'Имя друна только для вас',
+                          'Имя друга только для вас',
                           friend.alias ?? friend.first_name,
                         )
                         if (next === null) return
@@ -192,11 +192,11 @@ export function FriendsPage() {
                     </button>
                     <button
                       type="button"
-                      aria-label="Удалить из друнов"
+                      aria-label="Удалить из друзей"
                       onClick={async () => {
                         try {
                           await friendAction.mutateAsync({ userId: friend.id, action: 'remove' })
-                          setToast('Друн удалён')
+                          setToast('Друг удалён')
                           await invalidateSocialData()
                         } catch (error) {
                           showError(error)
@@ -354,7 +354,7 @@ export function FriendsPage() {
       <Toast message={toast} onClose={() => setToast(null)} />
       <ModalSheet
         open={Boolean(receivedInviteCode)}
-        title="Приглашение в друны"
+        title="Приглашение в друзья"
         onClose={() => setSearchParams({})}
       >
         <div className="invite-confirmation">
@@ -374,7 +374,7 @@ export function FriendsPage() {
                   try {
                     await createRequest.mutateAsync({ invite_code: receivedInviteCode })
                     setSearchParams({})
-                    setToast('Запрос в друны отправлен')
+                    setToast('Запрос в друзья отправлен')
                     await invalidateSocialData()
                   } catch (error) {
                     showError(error)

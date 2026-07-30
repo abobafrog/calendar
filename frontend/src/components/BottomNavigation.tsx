@@ -5,7 +5,7 @@ const items = [
   { to: '/', label: 'Календарь', icon: CalendarDays, end: true },
   { to: '/availability', label: 'Время', icon: Search },
   { to: '/meetings', label: 'Встречи', icon: Clock3 },
-  { to: '/friends', label: 'Друны', icon: Handshake },
+  { to: '/friends', label: 'Друзья', icon: Handshake },
   { to: '/settings', label: 'Профиль', icon: Settings2 },
 ]
 

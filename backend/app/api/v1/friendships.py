@@ -151,7 +151,7 @@ async def rename_friend(
     relation = await FriendshipService(session).set_alias(current_user, user_id, payload.alias)
     friend = await UserRepository(session).get_by_id(user_id)
     if friend is None:
-        raise AppError(404, "friendship_not_found", "Друн не найден")
+        raise AppError(404, "friendship_not_found", "Друг не найден")
     return FriendResponse(
         **UserSummary.model_validate(friend).model_dump(),
         friendship_id=relation.id,

@@ -15,7 +15,7 @@ function interval(id: number, userId: number, start: string, end: string): BusyI
 }
 
 describe('раскладка пересекающихся дел', () => {
-  it('разносит дела пользователя и друнов по отдельным дорожкам', () => {
+  it('разносит дела пользователя и друзей по отдельным дорожкам', () => {
     const result = layoutOverlappingIntervals(
       [
         interval(1, 1, '10:00', '12:00'),

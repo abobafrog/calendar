@@ -997,6 +997,20 @@ select:focus-visible {
   align-items: center;
   gap: 8px;
 }
+.schedule-export-options {
+  display: grid;
+  gap: 10px;
+}
+.schedule-export-options > a {
+  width: 100%;
+  min-height: 52px;
+}
+.schedule-export-options > p {
+  margin: 2px 4px 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
 .desktop-add-action {
   display: none;
 }
@@ -1022,6 +1036,65 @@ select:focus-visible {
   align-items: center;
   justify-content: space-between;
   color: var(--accent);
+}
+.template-panel .form-label > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.template-panel .form-label > button {
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 750;
+}
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.template-grid article {
+  min-width: 0;
+  min-height: 61px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  display: flex;
+  align-items: stretch;
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+.template-grid article > button:first-child {
+  min-width: 0;
+  flex: 1;
+  padding: 9px 10px;
+  border: 0;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  color: var(--text);
+  text-align: left;
+  background: transparent;
+}
+.template-grid strong {
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+}
+.template-grid small {
+  color: var(--muted);
+  font-size: 8px;
+}
+.template-grid article > button:last-child:not(:first-child) {
+  width: 34px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  color: var(--red);
+  background: transparent;
 }
 .selection-preview > div {
   display: flex;
@@ -1719,6 +1792,31 @@ select:focus-visible {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 7px;
+}
+.language-selector {
+  min-height: 62px;
+  padding: 7px;
+  display: grid;
+  grid-template-columns: 38px 1fr 1fr;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+}
+.language-selector > svg {
+  margin-inline: auto;
+}
+.language-selector button {
+  min-height: 45px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 750;
+}
+.language-selector button.is-active {
+  color: #fff;
+  background: var(--accent);
 }
 .theme-selector button {
   min-width: 0;

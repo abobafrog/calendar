@@ -40,7 +40,7 @@ export function PrivacyPage() {
         <div>
           <strong>Время видно, детали — по вашему выбору</strong>
           <p>
-            Принятые друны всегда видят только занятость. Название события показывается лишь когда
+            Принятые друзья всегда видят только занятость. Название события показывается лишь когда
             это разрешено здесь и у самого события.
           </p>
         </div>
@@ -56,7 +56,7 @@ export function PrivacyPage() {
           </div>
           <div>
             <span>
-              <EyeOff size={17} /> Принятые друны
+              <EyeOff size={17} /> Принятые друзья
             </span>
             <strong>
               {user.data.share_details_with_friends || temporaryActive

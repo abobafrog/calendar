@@ -1,4 +1,13 @@
-import { Check, ExternalLink, Gift, ListFilter, Pencil, Plus, Sparkles } from 'lucide-react'
+import {
+  Check,
+  Download,
+  ExternalLink,
+  Gift,
+  ListFilter,
+  Pencil,
+  Plus,
+  Sparkles,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
@@ -19,6 +28,7 @@ import { TimeGrid } from '../components/TimeGrid'
 import { Toast } from '../components/Toast'
 import { ModalSheet } from '../components/ModalSheet'
 import { colorForUser } from '../lib/colors'
+import { useLanguage } from '../lib/language'
 import { formatDateInZone, formatTimeInZone } from '../lib/time'
 import type { BusyInterval, Friend, Holiday, User } from '../lib/types'
 
@@ -27,6 +37,7 @@ type CalendarView = 'day' | 'week' | 'month'
 
 export function CalendarPage() {
   const navigate = useNavigate()
+  const { language } = useLanguage()
   const queryClient = useQueryClient()
   const [date, setDate] = useState(new Date())
   const [view, setView] = useState<CalendarView>(() =>
@@ -39,6 +50,7 @@ export function CalendarPage() {
   const [holidayCardOpen, setHolidayCardOpen] = useState(false)
   const [finishingIntervalId, setFinishingIntervalId] = useState<number | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
   const currentUserQuery = useCurrentUser()
   const friendQuery = useFriends()
   const range = useMemo(() => calendarRange(date, view), [date, view])
@@ -102,6 +114,13 @@ export function CalendarPage() {
           <h1>Календарь</h1>
         </div>
         <div className="calendar-header-actions">
+          <GlassButton
+            variant="icon"
+            aria-label="Скачать расписание"
+            onClick={() => setExportOpen(true)}
+          >
+            <Download size={19} />
+          </GlassButton>
           <Link
             to="/busy/new"
             className="header-action desktop-add-action"
@@ -111,7 +130,7 @@ export function CalendarPage() {
           </Link>
           <GlassButton
             variant="icon"
-            aria-label={allFriendsSelected ? 'Скрыть друнов' : 'Показать всех друнов'}
+            aria-label={allFriendsSelected ? 'Скрыть друзей' : 'Показать всех друзей'}
             onClick={() => {
               setSelected(allFriendsSelected ? [] : availableFriends.map((friend) => friend.id))
             }}
@@ -120,6 +139,23 @@ export function CalendarPage() {
           </GlassButton>
         </div>
       </header>
+      <ModalSheet open={exportOpen} title="Скачать расписание" onClose={() => setExportOpen(false)}>
+        <div className="schedule-export-options">
+          {(['week', 'month'] as const).map((period) => (
+            <a
+              key={period}
+              className="glass-button glass-button--primary"
+              href={`/api/v1/calendar/export.pdf?view=${period}&anchor=${dayKey(date)}&language=${language}`}
+              download
+              onClick={() => setExportOpen(false)}
+            >
+              <Download size={18} />
+              {period === 'week' ? 'Скачать неделю в PDF' : 'Скачать месяц в PDF'}
+            </a>
+          ))}
+          <p>В файле названия дел показываются полностью и переносятся на новые строки.</p>
+        </div>
+      </ModalSheet>
       <div className="calendar-toolbar">
         <DateSwitcher
           date={date}
@@ -211,7 +247,7 @@ export function CalendarPage() {
             <div className="section-heading">
               <div>
                 <span>Наложение</span>
-                <h2>Графики друнов</h2>
+                <h2>Графики друзей</h2>
               </div>
               <span className="selection-count">{selected.length || 'Нет'}</span>
             </div>
@@ -524,7 +560,7 @@ function IntervalSummary({
   const isOwn = interval.user_id === currentUser.id
   const friend = friends.find((item) => item.id === interval.user_id)
   const owner = isOwn ? currentUser : friend
-  const ownerName = isOwn ? 'Вы' : friend?.alias || friend?.first_name || 'Друн'
+  const ownerName = isOwn ? 'Вы' : friend?.alias || friend?.first_name || 'Друг'
   const now = new Date()
   const canFinishNow =
     isOwn &&
@@ -563,7 +599,7 @@ function IntervalSummary({
           {!isOwn && !interval.title && (
             <div>
               <dt>Детали</dt>
-              <dd>Друн скрыл название дела</dd>
+              <dd>Друг скрыл название дела</dd>
             </div>
           )}
         </dl>

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.models.meeting import MeetingParticipant, MeetingProposal
     from app.models.notification import Notification
     from app.models.payment import Payment
+    from app.models.task_template import TaskTemplate
 
 
 class User(TimestampMixin, Base):
@@ -73,3 +74,4 @@ class User(TimestampMixin, Base):
     meeting_participations: Mapped[list["MeetingParticipant"]] = relationship(back_populates="user")
     notifications: Mapped[list["Notification"]] = relationship(back_populates="user")
     payments: Mapped[list["Payment"]] = relationship(back_populates="user")
+    task_templates: Mapped[list["TaskTemplate"]] = relationship(back_populates="user", cascade="all, delete-orphan")

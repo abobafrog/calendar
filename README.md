@@ -11,6 +11,9 @@ TimeTogether is a private collaborative scheduling app. Users can add busy inter
 - The privacy center explains visibility and supports hidden details, a 24-hour temporary grant and a private default.
 - The frontend is installable as a PWA and delivers system notifications through its service worker.
 - The public home page includes an interactive three-person scheduling demo.
+- Murinsky is the default interface language, with Russian available in settings; the translator preserves verbs and the words `БУРМАЛДА` and `ХАММАМ`.
+- Built-in task templates cover hammam, burmalda, massage tables and burmaldet; every user can save and delete personal templates.
+- The calendar exports printable weekly and monthly PDF schedules with complete, wrapped task titles.
 
 ## Local Run
 

@@ -14,7 +14,7 @@ export function FriendSelector({
   const toggle = (id: number) =>
     onChange(selected.includes(id) ? selected.filter((item) => item !== id) : [...selected, id])
   return (
-    <div className="friend-selector" aria-label="Выбор друнов">
+    <div className="friend-selector" aria-label="Выбор друзей">
       {friends.map((friend) => {
         const active = selected.includes(friend.id)
         return (

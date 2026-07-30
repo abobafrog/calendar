@@ -145,7 +145,7 @@ async def create_group(
     friendships = FriendshipRepository(session)
     for user_id in member_ids:
         if user_id != current_user.id and not await friendships.is_friend(current_user.id, user_id):
-            raise AppError(403, "group_member_not_friend", "В группу можно добавлять только друнов")
+            raise AppError(403, "group_member_not_friend", "В группу можно добавлять только друзей")
     group = PlanningGroup(
         owner_id=current_user.id,
         name=payload.name.strip(),

@@ -167,7 +167,7 @@ class AvailabilityService:
                 raise AppError(
                     403,
                     "availability_access_denied",
-                    "В поиск времени можно добавлять только принятых друнов",
+                    "В поиск времени можно добавлять только принятых друзей",
                 )
 
         users = list(await self.session.scalars(select(User).where(User.id.in_(participant_ids))))

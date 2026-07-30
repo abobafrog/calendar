@@ -46,7 +46,7 @@ async def start_with_payload(message: Message, command: CommandObject, settings:
                 )
                 await message.answer(
                     "Приглашение отправлено. Данные календаря станут доступны только после принятия.",
-                    reply_markup=open_app_keyboard(settings.mini_app_url, "Открыть друнов"),
+                    reply_markup=open_app_keyboard(settings.mini_app_url, "Открыть друзей"),
                 )
             except AppError as exc:
                 await message.answer(exc.message, reply_markup=open_app_keyboard(settings.mini_app_url))
@@ -76,8 +76,8 @@ async def friends(message: Message, settings: Settings) -> None:
         await session.commit()
         count = len(await FriendshipRepository(session).list_friends(user.id))
     await message.answer(
-        f"Друнов: {count}. Управление приглашениями доступно в приложении.",
-        reply_markup=open_app_keyboard(settings.mini_app_url, "Открыть друнов"),
+        f"Друзей: {count}. Управление приглашениями доступно в приложении.",
+        reply_markup=open_app_keyboard(settings.mini_app_url, "Открыть друзей"),
     )
 
 
@@ -90,7 +90,7 @@ async def invite(message: Message, settings: Settings) -> None:
         await session.commit()
     link = f"https://t.me/{settings.bot_username}?start=invite_{user.invite_code}"
     await message.answer(
-        "Персональная ссылка приглашения. Она не открывает календарь без взаимного принятия в друны:\n" + link
+        "Персональная ссылка приглашения. Она не открывает календарь без взаимного принятия в друзья:\n" + link
     )
 
 
@@ -108,7 +108,7 @@ async def meetings(message: Message, settings: Settings) -> None:
 @router.message(Command("help"))
 async def help_command(message: Message, settings: Settings) -> None:
     await message.answer(
-        "/app — календарь\n/friends — друны\n/invite — ссылка-приглашение\n/meetings — встречи\n/help — помощь",
+        "/app — календарь\n/friends — друзья\n/invite — ссылка-приглашение\n/meetings — встречи\n/help — помощь",
         reply_markup=open_app_keyboard(settings.mini_app_url),
     )
 

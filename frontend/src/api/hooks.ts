@@ -12,6 +12,7 @@ import type {
   PlanningGroup,
   SchedulingPoll,
   SiteNotification,
+  TaskTemplate,
   User,
   UserCalendar,
 } from '../lib/types'
@@ -267,6 +268,27 @@ export function useCreateSchedulingLink() {
       daily_end: string
     }) =>
       apiRequest<SchedulingPoll>('/scheduling-links', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+  })
+}
+
+export function useTaskTemplates() {
+  return useQuery({
+    queryKey: ['task-templates'],
+    queryFn: () => apiRequest<TaskTemplate[]>('/task-templates'),
+  })
+}
+
+export function useCreateTaskTemplate() {
+  return useMutation({
+    mutationFn: (payload: {
+      title: string
+      duration_minutes: number
+      visibility: TaskTemplate['visibility']
+    }) =>
+      apiRequest<TaskTemplate>('/task-templates', {
         method: 'POST',
         body: JSON.stringify(payload),
       }),

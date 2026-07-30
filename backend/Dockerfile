@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH=/app/.venv/bin:$PATH
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y gosu \
+    && apt-get install --no-install-recommends -y gosu fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --uid 10001 app
 

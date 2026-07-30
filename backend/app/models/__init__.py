@@ -10,6 +10,7 @@ from app.models.planning import (
     SchedulingPollOption,
     SchedulingPollVote,
 )
+from app.models.task_template import TaskTemplate
 from app.models.user import User
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     "SchedulingPoll",
     "SchedulingPollOption",
     "SchedulingPollVote",
+    "TaskTemplate",
     "User",
 ]

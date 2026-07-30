@@ -8,6 +8,7 @@ from app.api.v1 import (
     notifications,
     payments,
     planning,
+    task_templates,
     users,
 )
 from fastapi import APIRouter
@@ -23,3 +24,4 @@ api_router.include_router(meetings.router)
 api_router.include_router(notifications.router)
 api_router.include_router(payments.router)
 api_router.include_router(planning.router)
+api_router.include_router(task_templates.router)

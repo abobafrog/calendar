@@ -155,3 +155,12 @@ export interface SchedulingPoll {
   options: PollOption[]
   created_at: string
 }
+
+export interface TaskTemplate {
+  id: string
+  title: string
+  duration_minutes: number
+  visibility: Visibility
+  system: boolean
+  created_at: string | null
+}

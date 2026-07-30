@@ -38,7 +38,7 @@ class MeetingService:
             raise AppError(404, "participant_not_found", "Один или несколько участников не найдены")
         for participant_id in participant_ids:
             if participant_id != actor.id and not await self.friendships.is_friend(actor.id, participant_id):
-                raise AppError(403, "participant_not_friend", "Участниками встречи могут быть только друны")
+                raise AppError(403, "participant_not_friend", "Участниками встречи могут быть только друзья")
 
         meeting = MeetingProposal(
             creator_id=actor.id,

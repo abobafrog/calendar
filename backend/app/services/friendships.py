@@ -36,7 +36,7 @@ class FriendshipService:
             if relation.status == FriendshipStatus.BLOCKED:
                 raise AppError(403, "friendship_blocked", "Нельзя отправить приглашение заблокированному пользователю")
             if relation.status == FriendshipStatus.ACCEPTED:
-                raise AppError(409, "already_friends", "Этот пользователь уже ваш друн")
+                raise AppError(409, "already_friends", "Этот пользователь уже ваш друг")
             if relation.status == FriendshipStatus.PENDING:
                 if relation.requester_id == target.id:
                     relation.status = FriendshipStatus.ACCEPTED
@@ -45,7 +45,7 @@ class FriendshipService:
                     )
                     await self.session.commit()
                     return relation
-                raise AppError(409, "friend_request_exists", "Заявка в друны уже отправлена")
+                raise AppError(409, "friend_request_exists", "Заявка в друзья уже отправлена")
             relation.requester_id = actor.id
             relation.addressee_id = target.id
             relation.status = FriendshipStatus.PENDING
@@ -61,7 +61,7 @@ class FriendshipService:
     async def respond(self, actor: User, friendship_id: int, accept: bool) -> Friendship:
         relation = await self.repository.get_by_id(friendship_id, for_update=True)
         if relation is None or relation.addressee_id != actor.id:
-            raise AppError(404, "friend_request_not_found", "Заявка в друны не найдена")
+            raise AppError(404, "friend_request_not_found", "Заявка в друзья не найдена")
         if relation.status != FriendshipStatus.PENDING:
             raise AppError(409, "friend_request_resolved", "На эту заявку уже ответили")
         relation.status = FriendshipStatus.ACCEPTED if accept else FriendshipStatus.REJECTED
@@ -84,7 +84,7 @@ class FriendshipService:
     async def remove_friend(self, actor: User, friend_id: int) -> None:
         relation = await self.repository.get_pair(actor.id, friend_id, for_update=True)
         if relation is None or relation.status != FriendshipStatus.ACCEPTED:
-            raise AppError(404, "friendship_not_found", "Друн не найден")
+            raise AppError(404, "friendship_not_found", "Друг не найден")
         await self.session.delete(relation)
         await self.session.commit()
 
@@ -115,7 +115,7 @@ class FriendshipService:
             raise AppError(422, "self_friendship", "Здесь нельзя переименовать самого себя")
         relation = await self.repository.get_pair(actor.id, target_id, for_update=True)
         if relation is None or relation.status != FriendshipStatus.ACCEPTED:
-            raise AppError(404, "friendship_not_found", "Принятый друн не найден")
+            raise AppError(404, "friendship_not_found", "Принятый друг не найден")
         if relation.requester_id == actor.id:
             relation.requester_alias = alias
         else:

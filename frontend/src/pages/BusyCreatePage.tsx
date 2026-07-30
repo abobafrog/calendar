@@ -1,13 +1,24 @@
-import { ArrowLeft, CalendarPlus, Check, Eye, LockKeyhole, Plus, Trash2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  BookOpen,
+  CalendarPlus,
+  Check,
+  Eye,
+  LockKeyhole,
+  Plus,
+  Trash2,
+} from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiRequest } from '../api/client'
-import { useCurrentUser } from '../api/hooks'
+import { useCreateTaskTemplate, useCurrentUser, useTaskTemplates } from '../api/hooks'
 import { DateSwitcher } from '../components/DateSwitcher'
 import { GlassButton } from '../components/GlassButton'
 import { GlassPanel } from '../components/GlassPanel'
 import { PaymentSheet } from '../components/PaymentSheet'
+import { ModalSheet } from '../components/ModalSheet'
+import { Toast } from '../components/Toast'
 import type { PaymentMethod } from '../components/PaymentSheet'
 import { formatLocalDateKey, fromLocalDateKey, toLocalDateKey } from '../lib/time'
 import type { Visibility } from '../lib/types'
@@ -25,6 +36,8 @@ export function BusyCreatePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const currentUser = useCurrentUser()
+  const templates = useTaskTemplates()
+  const createTemplate = useCreateTaskTemplate()
   const today = toLocalDateKey(new Date())
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(today)
@@ -35,6 +48,10 @@ export function BusyCreatePage() {
   )
   const [saving, setSaving] = useState(false)
   const [paymentOpen, setPaymentOpen] = useState(false)
+  const [templateOpen, setTemplateOpen] = useState(false)
+  const [templateTitle, setTemplateTitle] = useState('')
+  const [templateDuration, setTemplateDuration] = useState(60)
+  const [toast, setToast] = useState<string | null>(null)
   const selectedDate = fromLocalDateKey(date)
   const weekStart = startOfWeek(selectedDate)
   const weekDates = Array.from({ length: 7 }, (_, index) => {
@@ -44,6 +61,14 @@ export function BusyCreatePage() {
   })
   const canSave =
     days.length > 0 && blocks.every(({ start, end }) => timeToMinutes(start) < timeToMinutes(end))
+
+  const applyTemplate = (template: NonNullable<typeof templates.data>[number]) => {
+    const start = blocks[0]?.start ?? '10:00'
+    setTitle(template.title)
+    setBlocks([{ start, end: addMinutes(start, template.duration_minutes) }])
+    setVisibility(template.visibility)
+    setToast(`Шаблон «${template.title}» применён`)
+  }
 
   const save = async (paymentMethod: PaymentMethod) => {
     if (!canSave || saving) return
@@ -101,6 +126,46 @@ export function BusyCreatePage() {
         <strong>
           {blocks.length} · {blocks[0].start} — {blocks[0].end}
         </strong>
+      </GlassPanel>
+      <GlassPanel className="form-section template-panel">
+        <div className="form-label">
+          <span>
+            <BookOpen size={16} /> Шаблонные дела
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setTemplateTitle(title)
+              setTemplateOpen(true)
+            }}
+          >
+            <Plus size={15} /> Свой шаблон
+          </button>
+        </div>
+        <div className="template-grid">
+          {templates.data?.map((template) => (
+            <article key={template.id}>
+              <button type="button" onClick={() => applyTemplate(template)}>
+                <strong>{template.title}</strong>
+                <small>{template.duration_minutes} мин</small>
+              </button>
+              {!template.system && (
+                <button
+                  type="button"
+                  aria-label={`Удалить шаблон ${template.title}`}
+                  onClick={async () => {
+                    const id = Number(template.id.replace('user:', ''))
+                    await apiRequest(`/task-templates/${id}`, { method: 'DELETE' })
+                    await queryClient.invalidateQueries({ queryKey: ['task-templates'] })
+                    setToast('Шаблон удалён')
+                  }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
       </GlassPanel>
       <GlassPanel className="form-section">
         <label className="field">
@@ -233,7 +298,7 @@ export function BusyCreatePage() {
       </GlassPanel>
       <GlassPanel className="form-section">
         <div className="form-label">
-          <span>Показывать друнам</span>
+          <span>Показывать друзьям</span>
         </div>
         <div className="visibility-options">
           <button
@@ -244,7 +309,7 @@ export function BusyCreatePage() {
             <Eye size={19} />
             <span>
               <strong>Да, показать дело</strong>
-              <small>Друны увидят название и время</small>
+              <small>Друзья увидят название и время</small>
             </span>
           </button>
           <button
@@ -255,7 +320,7 @@ export function BusyCreatePage() {
             <LockKeyhole size={19} />
             <span>
               <strong>Нет, скрыть детали</strong>
-              <small>Друны увидят только «Занят»</small>
+              <small>Друзья увидят только «Занят»</small>
             </span>
           </button>
         </div>
@@ -274,6 +339,53 @@ export function BusyCreatePage() {
         onConfirmed={save}
         onSuccess={() => navigate('/', { replace: true })}
       />
+      <ModalSheet open={templateOpen} title="Свой шаблон" onClose={() => setTemplateOpen(false)}>
+        <div className="sheet-form">
+          <label className="field">
+            <span>Название дела</span>
+            <input
+              value={templateTitle}
+              onChange={(event) => setTemplateTitle(event.target.value)}
+              placeholder="Мой обычный план"
+            />
+          </label>
+          <label className="field">
+            <span>Обычная длительность</span>
+            <select
+              value={templateDuration}
+              onChange={(event) => setTemplateDuration(Number(event.target.value))}
+            >
+              <option value="30">30 минут</option>
+              <option value="60">1 час</option>
+              <option value="90">1,5 часа</option>
+              <option value="120">2 часа</option>
+              <option value="180">3 часа</option>
+            </select>
+          </label>
+          <GlassButton
+            variant="primary"
+            disabled={!templateTitle.trim() || createTemplate.isPending}
+            onClick={async () => {
+              try {
+                const template = await createTemplate.mutateAsync({
+                  title: templateTitle.trim(),
+                  duration_minutes: templateDuration,
+                  visibility,
+                })
+                await queryClient.invalidateQueries({ queryKey: ['task-templates'] })
+                applyTemplate(template)
+                setTemplateOpen(false)
+                setTemplateTitle('')
+              } catch (error) {
+                setToast(error instanceof Error ? error.message : 'Не удалось сохранить шаблон')
+              }
+            }}
+          >
+            Сохранить шаблон
+          </GlassButton>
+        </div>
+      </ModalSheet>
+      <Toast message={toast} onClose={() => setToast(null)} />
     </div>
   )
 }
@@ -289,6 +401,11 @@ function startOfWeek(date: Date) {
 function timeToMinutes(value: string) {
   const [hours, minutes] = value.split(':').map(Number)
   return hours * 60 + minutes
+}
+
+function addMinutes(value: string, duration: number) {
+  const total = Math.min(timeToMinutes(value) + duration, 24 * 60)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
 }
 
 function makeLocalDateTime(date: Date, time: string) {

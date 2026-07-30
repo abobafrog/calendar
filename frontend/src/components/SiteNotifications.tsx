@@ -5,7 +5,7 @@ import { useMarkNotificationRead, useMeetings, useNotifications } from '../api/h
 import type { SiteNotification } from '../lib/types'
 
 const notificationText: Record<string, { title: string; message: string }> = {
-  friend_request_created: { title: 'Новая заявка', message: 'Вам отправили заявку в друны.' },
+  friend_request_created: { title: 'Новая заявка', message: 'Вам отправили заявку в друзья.' },
   friend_request_accepted: {
     title: 'Заявка принята',
     message: 'Теперь вы можете сравнивать календари.',
