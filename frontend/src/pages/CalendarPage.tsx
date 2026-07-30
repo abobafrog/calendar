@@ -437,6 +437,7 @@ function MonthCalendar({
 
 function HolidayCard({ holiday, onClose }: { holiday: Holiday | null; onClose: () => void }) {
   if (!holiday) return null
+  const isReligious = holiday.category === 'Религиозный'
   const formattedDate = new Date(`${holiday.date}T12:00:00`).toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'long',
@@ -448,13 +449,14 @@ function HolidayCard({ holiday, onClose }: { holiday: Holiday | null; onClose: (
           <i>✦</i>
           <i>●</i>
           <i>✦</i>
-          <span>🎉</span>
+          <span>{isReligious ? '🕊️' : '🎉'}</span>
         </div>
         <span className="holiday-card__category">{holiday.category}</span>
         <h3>{holiday.title}</h3>
         <p>
-          Поздравляем! Пусть этот день подарит хороший повод улыбнуться, написать близким и провести
-          время вместе.
+          {isReligious
+            ? 'Пусть этот день принесёт душевный покой, светлые мысли и тепло. Желаем мира, добра и благополучия вам и вашим близким.'
+            : 'Поздравляем! Пусть этот день подарит хороший повод улыбнуться, написать близким и провести время вместе.'}
         </p>
         <div className="holiday-card__date">{formattedDate}</div>
         <a href={holiday.source_url} target="_blank" rel="noreferrer">
